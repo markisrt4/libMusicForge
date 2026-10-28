@@ -104,3 +104,26 @@ Contributions and design discussions are welcome. Please read [AGENTS.md](AGENTS
 Licensed under the [Apache License 2.0](LICENSE).
 
 libMusicForge is an independent open-source project. Third-party music metadata and analytics remain subject to their respective providers' terms and licenses.
+
+
+## Last.fm statistics (development branch)
+
+Last.fm provides **Last.fm listener counts and scrobbles**, not Spotify streams. A free Last.fm API key is required for the statistics adapter.
+
+```bash
+export LASTFM_API_KEY="your-api-key"
+python examples/lastfm_statistics.py
+```
+
+Or use the Python API:
+
+```python
+from musicforge.providers.lastfm import LastFmAdapter
+
+async with LastFmAdapter(api_key="your-api-key") as lastfm:
+    stats = await lastfm.track_statistics("Collective Soul", "Burn")
+    for stat in stats:
+        print(stat.metric, stat.value, stat.unit, stat.provider)
+```
+
+The Last.fm adapter currently exposes `artist_statistics()` and `track_statistics()` directly. Cross-provider statistic lookup by shared identifiers is not implemented; Last.fm artist/track names are not interchangeable with MusicBrainz IDs. Tests use mocked HTTP and do not require an API key or network connection.
