@@ -74,6 +74,8 @@ python -m pip install -e ".[dev]"
 python -m pytest -q
 ```
 
+The `dev` extra installs only pytest, making it suitable for Termux. On Linux or CI, install the additional linting, type-checking, and build tools with `python -m pip install -e ".[dev,quality]"`. Ruff is not required for normal development or runtime use.
+
 MusicBrainz is the first implemented provider. Use a real contact address in your User-Agent as required by MusicBrainz's API guidance:
 
 ```python
