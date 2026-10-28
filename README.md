@@ -1,2 +1,78 @@
 # libMusicForge
-Open-source music metadata, analytics, and discovery library
+
+**An open-source, library-first toolkit for music metadata, statistics, and discovery.**
+
+libMusicForge provides a consistent way to query and reconcile music information across multiple services. It is designed for applications that need artist, recording, release, and community-listening data without coupling themselves to any one provider.
+
+**Status:** Early planning. The APIs and examples described below are proposed, not yet implemented.
+
+## Goals
+
+- **Library first:** A reusable Python package with an optional HTTP API, not a music player or graphical dashboard.
+- **Provider independence:** No mandatory Spotify, Last.fm, or other commercial service account.
+- **Normalized metadata:** Consistent artist, recording, release, and identifier models with source attribution.
+- **Honest metrics:** Distinguish Spotify streams, Last.fm scrobbles, listener counts, and locally observed plays.
+- **Extensibility:** Capability-specific provider adapters rather than one giant interface.
+- **Practical operation:** Async I/O, caching, rate-limit handling, and graceful degradation when providers are unavailable.
+- **Portable integrations:** Usable from OpenRoadCode, Linux, Raspberry Pi, Android/Termux, or independent applications.
+
+## Non-goals
+
+- Hosting, downloading, or distributing copyrighted audio.
+- Building a music player, graphical dashboard, or ORC-specific user interface.
+- Claiming exact Spotify stream counts where the source does not provide them.
+- Requiring a continuously running service to use the Python library.
+
+## Planned capabilities
+
+| Capability | Description |
+| --- | --- |
+| Metadata | Artist, recording, track, release, credits, and identifiers |
+| Search | Resolve and match recordings across providers |
+| Statistics | Source-labeled listener counts, scrobbles, and available trends |
+| Discovery | Related artists, tracks, and catalog exploration |
+| Optional HTTP API | REST interface built on the same library services |
+| Cache | Optional persistent caching and request throttling |
+
+Potential providers include **MusicBrainz**, **Last.fm**, **ListenBrainz**, and **Spotify**, subject to their individual API terms, credentials, quotas, and availability. A provider's inclusion here is a roadmap item, not an implementation claim.
+
+## Architecture (proposed)
+
+```text
+Applications (ORC, CLI, third-party clients)
+           |                     |
+      Python package        Optional REST API
+           \                     /
+            Core services and models
+                       |
+           Capability-based interfaces
+                       |
+       MusicBrainz / Last.fm / other adapters
+                       |
+              Optional cache/storage
+```
+
+The library remains usable without the HTTP server. Providers implement only the capabilities they support. Normalized results preserve provider IDs, attribution, metric units, and retrieval timestamps where applicable.
+
+## Development roadmap
+
+1. **Foundation:** Packaging, typed domain models, provider contracts, unit tests, and CI.
+2. **Metadata:** MusicBrainz search and recording/release resolution.
+3. **Statistics:** Last.fm metrics with clear source and semantics.
+4. **Discovery:** Similar artists and related music where supported.
+5. **API:** Optional versioned REST service and usage examples.
+6. **Integrations:** Demonstrate consumption by OpenRoadCode without introducing ORC dependencies into the library.
+
+## Installation and usage
+
+No installable release exists yet. Installation commands and executable examples will be added after the first implementation milestone. Until then, this repository documents the intended design.
+
+## Contributing
+
+Contributions and design discussions are welcome. Please read [AGENTS.md](AGENTS.md) for repository conventions and agent-assisted development rules. Open an issue before undertaking major interface or architecture changes.
+
+## Licensing
+
+Licensed under the [Apache License 2.0](LICENSE).
+
+libMusicForge is an independent open-source project. Third-party music metadata and analytics remain subject to their respective providers' terms and licenses.
