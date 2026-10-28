@@ -5,10 +5,8 @@ the User-Agent and respect MusicBrainz's published rate-limit requirements.
 """
 
 import asyncio
-import json
-from collections.abc import Callable
 from typing import Any
-from urllib.parse import urlencode
+from uuid import UUID
 
 import httpx
 
@@ -86,7 +84,7 @@ class MusicBrainzAdapter:
         """Search recordings; results may represent multiple performances."""
         if not artist.strip() or not title.strip():
             raise ValueError("artist and title are required")
-        query = f'recording:"{_escape( title )}" AND artist:"{_escape( artist )}"'
+        query = f'recording:"{_escape(title)}" AND artist:"{_escape(artist)}"'
         data = await self._get("recording", {"query": query, "limit": "25"})
         return [_recording(item) for item in data.get("recordings", [])
                 if isinstance(item, dict) and item.get("title")]
@@ -137,9 +135,8 @@ def _validate(identifier: Identifier, kind: str) -> None:
     if identifier.namespace != f"musicbrainz:{kind}":
         raise ValueError(f"Expected musicbrainz:{kind} identifier")
     # Do not allow arbitrary path segments from caller-supplied identifiers.
-    import uuid
     try:
-        uuid.UUID(identifier.value)
+        UUID(identifier.value)
     except (ValueError, AttributeError) as exc:
         raise ValueError("MusicBrainz identifiers must be UUIDs") from exc
 
