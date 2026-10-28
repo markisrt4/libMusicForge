@@ -1,6 +1,6 @@
 import asyncio
 
-from musicforge import Artist, Identifier, MusicForge, Recording, Statistic
+from musicforge import Artist, Identifier, MusicForge, Recording
 from musicforge.interfaces import MusicSearchIf
 
 
