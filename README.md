@@ -4,7 +4,7 @@
 
 libMusicForge provides a consistent way to query and reconcile music information across multiple services. It is designed for applications that need artist, recording, release, and community-listening data without coupling themselves to any one provider.
 
-**Status:** Early planning. The APIs and examples described below are proposed, not yet implemented.
+**Status:** Early development. The Python foundation and MusicBrainz adapter are implemented on development branches; provider support and public APIs may change before the first release.
 
 ## Goals
 
@@ -63,9 +63,35 @@ The library remains usable without the HTTP server. Providers implement only the
 5. **API:** Optional versioned REST service and usage examples.
 6. **Integrations:** Demonstrate consumption by OpenRoadCode without introducing ORC dependencies into the library.
 
-## Installation and usage
+## Development installation and usage
 
-No installable release exists yet. Installation commands and executable examples will be added after the first implementation milestone. Until then, this repository documents the intended design.
+The library is not published to PyPI yet. From a checkout of the development branch:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
+python -m pytest -q
+```
+
+MusicBrainz is the first implemented provider. Use a real contact address in your User-Agent as required by MusicBrainz's API guidance:
+
+```python
+import asyncio
+from musicforge import MusicForge
+from musicforge.providers.musicbrainz import MusicBrainzAdapter
+
+async def main():
+    async with MusicBrainzAdapter(contact="you@example.com") as provider:
+        async with MusicForge([provider]) as music:
+            tracks = await music.search_track("Collective Soul", "Burn")
+            for track in tracks:
+                print(track.title, track.artists, track.identifiers)
+
+asyncio.run(main())
+```
+
+Results are a list of candidate recordings, not a guaranteed unique match. The adapter uses public MusicBrainz endpoints and defaults to at least 1.1 seconds between its requests. No network calls are required for unit tests.
 
 ## Contributing
 
