@@ -38,3 +38,32 @@ def test_retains_candidates_without_false_identity() -> None:
 def test_rejects_blank_search() -> None:
     with pytest.raises(ValueError):
         asyncio.run(identify_and_enrich(Metadata(), Statistics(), "", "Burn"))
+
+
+def test_metadata_failure_preserves_lastfm_statistics() -> None:
+    class OfflineMetadata:
+        async def search_recordings(self, artist: str, title: str) -> list[Recording]:
+            raise RuntimeError("MusicBrainz HTTP 503")
+
+    result = asyncio.run(
+        identify_and_enrich(OfflineMetadata(), Statistics(), "Collective Soul", "Burn")
+    )
+    assert result.candidates == ()
+    assert result.statistics[0].value == 7002
+    assert result.metadata_error is not None
+    assert "503" in result.metadata_error
+    assert result.statistics_error is None
+
+
+def test_statistics_failure_preserves_metadata() -> None:
+    class OfflineStatistics:
+        async def track_statistics(self, artist: str, title: str) -> list[Statistic]:
+            raise RuntimeError("Last.fm unavailable")
+
+    result = asyncio.run(
+        identify_and_enrich(Metadata(), OfflineStatistics(), "Collective Soul", "Burn")
+    )
+    assert len(result.candidates) == 2
+    assert result.statistics == ()
+    assert result.metadata_error is None
+    assert result.statistics_error is not None
