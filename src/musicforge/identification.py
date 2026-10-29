@@ -27,6 +27,8 @@ class EnrichedTrack:
     statistics: tuple[Statistic, ...]
     match_method: str = "artist_title_lookup"
     verified_recording_match: bool = False
+    metadata_error: str | None = None
+    statistics_error: str | None = None
 
 
 async def identify_and_enrich(
@@ -43,11 +45,24 @@ async def identify_and_enrich(
     """
     if not artist.strip() or not title.strip():
         raise ValueError("artist and title must be nonempty")
-    candidates = await metadata.search_recordings(artist, title)
-    stats = await statistics.track_statistics(artist, title)
+    # Provider failures are independent; preserve successful partial results.
+    candidates: list[Recording] = []
+    stats: list[Statistic] = []
+    metadata_error: str | None = None
+    statistics_error: str | None = None
+    try:
+        candidates = await metadata.search_recordings(artist, title)
+    except Exception as exc:
+        metadata_error = f"{type(exc).__name__}: {exc}"
+    try:
+        stats = await statistics.track_statistics(artist, title)
+    except Exception as exc:
+        statistics_error = f"{type(exc).__name__}: {exc}"
     return EnrichedTrack(
         requested_artist=artist,
         requested_title=title,
         candidates=tuple(candidates),
         statistics=tuple(stats),
+        metadata_error=metadata_error,
+        statistics_error=statistics_error,
     )
