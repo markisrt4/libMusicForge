@@ -159,3 +159,24 @@ Programmatic entry point: `musicforge.identification.identify_and_enrich(metadat
 ### Recording candidate details
 
 The `identify_track.py` example also fetches MusicBrainz recording details individually, displaying artist credits, duration, and up to five associated release titles/dates per candidate. These extra requests are rate-limited and may take several seconds. Release dates describe releases, not necessarily the original recording date. Candidate ordering is MusicBrainz search order, not a verified confidence ranking; titles containing words like "live" or "remaster" are not reliable proof of recording type.
+
+## Portable playback identity (early API)
+
+`musicforge.playback.TrackIdentity` holds an observation from any player or
+provider: source, artist, title, optional album, duration, ISRC and source ID.
+`PlaybackSourceIf` defines an async `current_track()` contract; Android
+MediaSession, Linux MPRIS, MPD and provider-specific adapters are **not yet
+implemented**. Core imports require none of their platform dependencies.
+
+`MusicBrainzNameResolver` uses MusicBrainz artist/title search to return
+candidate recordings with explicit evidence (exact title, artist credit,
+duration within two seconds). It **does not verify identity**, query ISRC, or
+turn a close duration into a fingerprint match.
+
+```bash
+export MUSICBRAINZ_CONTACT="you@example.com"
+python examples/resolve_track.py "Collective Soul" "Burn" --source mpd --duration-ms 215000
+```
+
+The example accepts manually supplied playback metadata. No Spotify,
+YouTube Music or local player connection is implied.
