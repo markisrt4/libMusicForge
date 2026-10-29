@@ -127,3 +127,19 @@ async with LastFmAdapter(api_key="your-api-key") as lastfm:
 ```
 
 The Last.fm adapter currently exposes `artist_statistics()` and `track_statistics()` directly. Cross-provider statistic lookup by shared identifiers is not implemented; Last.fm artist/track names are not interchangeable with MusicBrainz IDs. Tests use mocked HTTP and do not require an API key or network connection.
+
+## Compare multiple tracks
+
+Compare Last.fm listening statistics using the optional example CLI (no new dependencies):
+
+```bash
+export LASTFM_API_KEY="your-api-key"
+python examples/compare_tracks.py \
+  "Collective Soul:Burn" \
+  "Journey:Don't Stop Believin'" \
+  "Queen:Bohemian Rhapsody" \
+  "Nirvana:Smells Like Teen Spirit" \
+  --sort ratio
+```
+
+Supported sorting: `--sort listeners` (default), `--sort scrobbles`, or `--sort ratio`. Add `--ascending` to reverse the default descending order. The library function `musicforge.analytics.compare_tracks(provider, tracks, sort_by="listeners")` returns typed `TrackComparison` records. A ratio is undefined when listener count is zero or missing. These are Last.fm statistics only, not estimated worldwide streams.
