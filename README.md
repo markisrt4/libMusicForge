@@ -155,3 +155,7 @@ python examples/identify_track.py "Collective Soul" "Burn"
 ```
 
 Programmatic entry point: `musicforge.identification.identify_and_enrich(metadata, statistics, artist, title)`. It returns `EnrichedTrack` with all MusicBrainz candidates, separate Last.fm statistics, and `verified_recording_match=False`. Future work can introduce explicit identifier-based matching when supported by providers.
+
+### Recording candidate details
+
+The `identify_track.py` example also fetches MusicBrainz recording details individually, displaying artist credits, duration, and up to five associated release titles/dates per candidate. These extra requests are rate-limited and may take several seconds. Release dates describe releases, not necessarily the original recording date. Candidate ordering is MusicBrainz search order, not a verified confidence ranking; titles containing words like "live" or "remaster" are not reliable proof of recording type.
