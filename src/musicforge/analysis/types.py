@@ -32,3 +32,7 @@ class MusicAnalysisState:
     percussion: PercussionActivity = field(default_factory=PercussionActivity)
     sample_rate_hz: int = 0
     fft_size: int = 0
+    beat: float = 0.0
+    # FFT bin amplitudes (dBFS) and their corresponding frequencies (Hz).
+    spectrum_dbfs: tuple[float, ...] = ()
+    spectrum_hz: tuple[float, ...] = ()
