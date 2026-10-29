@@ -17,9 +17,13 @@ async def run(artist: str, title: str, contact: str, api_key: str) -> None:
     for recording in result.candidates:
         ids = ", ".join(f"{item.namespace}={item.value}" for item in recording.identifiers)
         print(f"  {recording.title}: {ids}")
+    if result.metadata_error:
+        print(f"MusicBrainz unavailable: {result.metadata_error}")
     print("Last.fm artist/title statistics (not assigned to a specific recording):")
     for stat in result.statistics:
         print(f"  {stat.metric}: {stat.value:,} {stat.unit}")
+    if result.statistics_error:
+        print(f"Last.fm unavailable: {result.statistics_error}")
 
 
 def main() -> None:
