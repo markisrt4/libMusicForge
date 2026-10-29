@@ -214,3 +214,29 @@ asyncio.run(main())
 ```
 
 MPRIS and provider-specific playback integrations remain planned.
+
+## Optional audio analysis engine
+
+OpenRoadCode's frontend-neutral FFT analyzer is available as an optional
+package, preserving the original MIT-licensed implementation and copyright
+notices in `src/musicforge/analysis/`.
+
+```bash
+pip install -e '.[analysis,dev]'
+python -m pytest -q
+```
+
+```python
+from musicforge.analysis import MusicAnalyzer
+
+analyzer = MusicAnalyzer(fft_size=2048, band_count=24)
+state = analyzer.analyze(pcm_samples, sample_rate_hz=48000)
+print(state.bass, state.percussion.kick, state.spectrum)
+```
+
+Pass normalized mono PCM samples. The analyzer includes adaptive spectrum
+normalization, percussion activity estimates, and optional ambient-noise
+calibration (`start_zeroize`, `finish_zeroize`, `clear_zeroize`).
+The estimates are heuristic activity indicators, not verified instrument
+classification or tempo detection. Capture, UI and audio routing stay with
+the host application. OpenRoadCode integration is a separate migration step.
