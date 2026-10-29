@@ -116,3 +116,31 @@ def test_low_sample_rate_returns_empty_spectrum_safely() -> None:
     state = analyzer.analyze(np.zeros(_FFT_SIZE, dtype=np.float32), 60)
 
     assert state.spectrum == tuple(0.0 for _ in range(24))
+
+def test_raw_fft_bins_match_fft_size_and_nyquist() -> None:
+    analyzer = MusicAnalyzer(fft_size=_FFT_SIZE)
+    state = analyzer.analyze(_tone(1000.0), _SAMPLE_RATE_HZ)
+    assert len(state.spectrum_dbfs) == len(state.spectrum_hz) == _FFT_SIZE // 2 + 1
+    assert state.spectrum_hz[0] == 0.0
+    assert state.spectrum_hz[-1] == _SAMPLE_RATE_HZ / 2
+    assert all(np.isfinite(state.spectrum_dbfs))
+
+
+def test_beat_detects_onset_then_decays_without_retrigger() -> None:
+    analyzer = MusicAnalyzer(fft_size=_FFT_SIZE)
+    silence = np.zeros(_FFT_SIZE, dtype=np.float32)
+    tone = _tone(1000.0)
+    analyzer.analyze(silence, _SAMPLE_RATE_HZ)
+    onset = analyzer.analyze(tone, _SAMPLE_RATE_HZ).beat
+    assert onset > 0.0
+    subsequent = [analyzer.analyze(tone, _SAMPLE_RATE_HZ).beat for _ in range(5)]
+    assert all(0.0 <= value <= 1.0 for value in subsequent)
+    assert subsequent[-1] < onset
+
+
+def test_zeroize_reset_clears_beat_history() -> None:
+    analyzer = MusicAnalyzer(fft_size=_FFT_SIZE)
+    analyzer.analyze(np.zeros(_FFT_SIZE, dtype=np.float32), _SAMPLE_RATE_HZ)
+    assert analyzer.analyze(_tone(1000.0), _SAMPLE_RATE_HZ).beat > 0.0
+    analyzer.clear_zeroize()
+    assert analyzer.analyze(_tone(1000.0), _SAMPLE_RATE_HZ).beat == 0.0
