@@ -4,7 +4,7 @@
 
 libMusicForge provides a consistent way to query and reconcile music information across multiple services. It is designed for applications that need artist, recording, release, and community-listening data without coupling themselves to any one provider.
 
-**Status:** Early planning. The APIs and examples described below are proposed, not yet implemented.
+**Status:** Early development. The Python foundation and MusicBrainz adapter are implemented on development branches; provider support and public APIs may change before the first release.
 
 ## Goals
 
@@ -63,9 +63,37 @@ The library remains usable without the HTTP server. Providers implement only the
 5. **API:** Optional versioned REST service and usage examples.
 6. **Integrations:** Demonstrate consumption by OpenRoadCode without introducing ORC dependencies into the library.
 
-## Installation and usage
+## Development installation and usage
 
-No installable release exists yet. Installation commands and executable examples will be added after the first implementation milestone. Until then, this repository documents the intended design.
+The library is not published to PyPI yet. From a checkout of the development branch:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
+python -m pytest -q
+```
+
+The `dev` extra installs only pytest, making it suitable for Termux. On Linux or CI, install the additional linting, type-checking, and build tools with `python -m pip install -e ".[dev,quality]"`. Ruff is not required for normal development or runtime use.
+
+MusicBrainz is the first implemented provider. Use a real contact address in your User-Agent as required by MusicBrainz's API guidance:
+
+```python
+import asyncio
+from musicforge import MusicForge
+from musicforge.providers.musicbrainz import MusicBrainzAdapter
+
+async def main():
+    async with MusicBrainzAdapter(contact="you@example.com") as provider:
+        async with MusicForge([provider]) as music:
+            tracks = await music.search_track("Collective Soul", "Burn")
+            for track in tracks:
+                print(track.title, track.artists, track.identifiers)
+
+asyncio.run(main())
+```
+
+Results are a list of candidate recordings, not a guaranteed unique match. The adapter uses public MusicBrainz endpoints and defaults to at least 1.1 seconds between its requests. No network calls are required for unit tests.
 
 ## Contributing
 
@@ -76,3 +104,42 @@ Contributions and design discussions are welcome. Please read [AGENTS.md](AGENTS
 Licensed under the [Apache License 2.0](LICENSE).
 
 libMusicForge is an independent open-source project. Third-party music metadata and analytics remain subject to their respective providers' terms and licenses.
+
+
+## Last.fm statistics (development branch)
+
+Last.fm provides **Last.fm listener counts and scrobbles**, not Spotify streams. A free Last.fm API key is required for the statistics adapter.
+
+```bash
+export LASTFM_API_KEY="your-api-key"
+python examples/lastfm_statistics.py
+```
+
+Or use the Python API:
+
+```python
+from musicforge.providers.lastfm import LastFmAdapter
+
+async with LastFmAdapter(api_key="your-api-key") as lastfm:
+    stats = await lastfm.track_statistics("Collective Soul", "Burn")
+    for stat in stats:
+        print(stat.metric, stat.value, stat.unit, stat.provider)
+```
+
+The Last.fm adapter currently exposes `artist_statistics()` and `track_statistics()` directly. Cross-provider statistic lookup by shared identifiers is not implemented; Last.fm artist/track names are not interchangeable with MusicBrainz IDs. Tests use mocked HTTP and do not require an API key or network connection.
+
+## Compare multiple tracks
+
+Compare Last.fm listening statistics using the optional example CLI (no new dependencies):
+
+```bash
+export LASTFM_API_KEY="your-api-key"
+python examples/compare_tracks.py \
+  "Collective Soul:Burn" \
+  "Journey:Don't Stop Believin'" \
+  "Queen:Bohemian Rhapsody" \
+  "Nirvana:Smells Like Teen Spirit" \
+  --sort ratio
+```
+
+Supported sorting: `--sort listeners` (default), `--sort scrobbles`, or `--sort ratio`. Add `--ascending` to reverse the default descending order. The library function `musicforge.analytics.compare_tracks(provider, tracks, sort_by="listeners")` returns typed `TrackComparison` records. A ratio is undefined when listener count is zero or missing. These are Last.fm statistics only, not estimated worldwide streams.
