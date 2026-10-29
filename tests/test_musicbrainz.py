@@ -91,3 +91,43 @@ def test_reject_invalid_identifier_and_empty_query() -> None:
                 await adapter.search_recordings("", "Burn")
 
     run(scenario())
+
+
+def test_transient_503_retries_then_succeeds() -> None:
+    attempts = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        attempts.append(request)
+        if len(attempts) < 3:
+            return httpx.Response(503)
+        return httpx.Response(200, json={"recordings": [RECORDING]})
+
+    async def scenario() -> None:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            async with MusicBrainzAdapter(
+                contact="dev@example.org", client=client, min_interval=0, max_retries=2
+            ) as adapter:
+                results = await adapter.search_recordings("Collective Soul", "Burn")
+                assert results[0].title == "Burn"
+
+    run(scenario())
+    assert len(attempts) == 3
+
+
+def test_503_exhaustion_raises() -> None:
+    attempts = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        attempts.append(request)
+        return httpx.Response(503)
+
+    async def scenario() -> None:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            async with MusicBrainzAdapter(
+                contact="dev@example.org", client=client, min_interval=0, max_retries=0
+            ) as adapter:
+                with pytest.raises(MusicBrainzError, match="503"):
+                    await adapter.search_recordings("Collective Soul", "Burn")
+
+    run(scenario())
+    assert len(attempts) == 1
