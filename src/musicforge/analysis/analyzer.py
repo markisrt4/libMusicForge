@@ -40,6 +40,10 @@ class MusicAnalyzer(MusicAnalyzerIf):
         )
         self._activity_peaks = {name: 1e-6 for name in activity_names}
         self._previous_activity = {name: 0.0 for name in activity_names}
+        self._previous_magnitude: np.ndarray | None = None
+        self._beat_envelope = 0.0
+        self._flux_average = 0.0
+        self._beat_age = 1.0
         self._zeroize_collecting = False
         self._zeroize_frames: list[np.ndarray] = []
         self._noise_floor: np.ndarray | None = None
@@ -80,6 +84,7 @@ class MusicAnalyzer(MusicAnalyzerIf):
         if sample_rate_hz <= 0:
             raise ValueError("sample_rate_hz must be positive")
         pcm = np.asarray(samples, dtype=np.float32).reshape(-1)
+        duration_s = max(1, pcm.size) / sample_rate_hz
         if pcm.size < self.fft_size:
             pcm = np.pad(pcm, (self.fft_size - pcm.size, 0))
         elif pcm.size > self.fft_size:
@@ -105,6 +110,7 @@ class MusicAnalyzer(MusicAnalyzerIf):
             "treble",
         )
         return MusicAnalysisState(
+            beat=self._beat(gated_magnitude, duration_s),
             level=level,
             bass=bass,
             mid=mid,
@@ -113,7 +119,24 @@ class MusicAnalyzer(MusicAnalyzerIf):
             percussion=self._percussion(gated_magnitude, frequencies),
             sample_rate_hz=sample_rate_hz,
             fft_size=self.fft_size,
+            spectrum_dbfs=tuple(float(v) for v in 20 * np.log10(np.maximum(magnitude, 1e-6))),
+            spectrum_hz=tuple(float(v) for v in frequencies),
         )
+
+    def _beat(self, magnitude: np.ndarray, duration_s: float) -> float:
+        """Estimate onsets via positive spectral flux, not tempo or instrument identity."""
+        previous = self._previous_magnitude
+        self._previous_magnitude = magnitude.copy()
+        flux = 0.0 if previous is None else float(np.sum(np.maximum(magnitude - previous, 0.0)))
+        energy = float(np.sum(magnitude))
+        relative = flux / max(energy, 1e-6)
+        self._beat_age += duration_s
+        self._beat_envelope *= float(np.exp(-duration_s / 0.14))
+        if energy > 1e-4 and relative > max(0.12, self._flux_average * 1.6) and self._beat_age >= 0.12:
+            self._beat_envelope = min(1.0, relative * 2.0)
+            self._beat_age = 0.0
+        self._flux_average += (relative - self._flux_average) * (1.0 - float(np.exp(-duration_s / 0.5)))
+        return self._beat_envelope
 
     def _gate_ambient(self, magnitude: np.ndarray) -> np.ndarray:
         if self._noise_floor is None or self._noise_floor.shape != magnitude.shape:
@@ -135,6 +158,10 @@ class MusicAnalyzer(MusicAnalyzerIf):
         return np.where(magnitude >= threshold, magnitude, 0.0)
 
     def _reset_adaptive_state(self) -> None:
+        self._previous_magnitude = None
+        self._beat_envelope = 0.0
+        self._flux_average = 0.0
+        self._beat_age = 1.0
         self._band_peaks.fill(1e-6)
         for key in self._summary_peaks:
             self._summary_peaks[key] = 1e-6
