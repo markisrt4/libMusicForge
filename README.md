@@ -180,3 +180,37 @@ python examples/resolve_track.py "Collective Soul" "Burn" --source mpd --duratio
 
 The example accepts manually supplied playback metadata. No Spotify,
 YouTube Music or local player connection is implied.
+
+## Raspberry Pi / Linux: MPD playback source
+
+The optional `MpdPlaybackSource` observes an MPD server using the standard
+TCP protocol and Python's standard library. No extra dependencies, graphical
+desktop or playback control are required. This works on Raspberry Pi OS,
+headless Linux, and Termux when MPD is reachable.
+
+```bash
+python examples/mpd_now_playing.py
+# Or connect to another MPD host:
+python examples/mpd_now_playing.py --host 192.168.1.50 --port 6600
+```
+
+If MPD requires authentication, set `MPD_PASSWORD` in the environment.
+Avoid exposing MPD's TCP port to untrusted networks; the native protocol
+does not provide transport encryption. The adapter returns `None` when
+MPD is stopped or when the current song lacks usable title/artist tags,
+and raises `MpdError` for connection or protocol failures. A paused song
+is still reported as the current track. The adapter does not install or
+start MPD, and does not detect Spotify/YouTube playback automatically.
+
+```python
+import asyncio
+from musicforge.providers.mpd import MpdPlaybackSource
+
+async def main():
+    track = await MpdPlaybackSource().current_track()
+    print(track)
+
+asyncio.run(main())
+```
+
+MPRIS and provider-specific playback integrations remain planned.
