@@ -131,3 +131,47 @@ def test_503_exhaustion_raises() -> None:
 
     run(scenario())
     assert len(attempts) == 1
+
+
+def test_recording_details_include_release_context() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.params["inc"] == "artist-credits+releases"
+        return httpx.Response(200, json={
+            **RECORDING,
+            "releases": [
+                {"id": ALBUM, "title": "Home", "date": "1995-03-14"},
+                {"id": "aa70d53e-2904-452e-bef5-b2780c5c21cb", "title": "Greatest Hits"},
+            ],
+        })
+
+    async def scenario() -> None:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            async with MusicBrainzAdapter(
+                contact="dev@example.org", client=client, min_interval=0
+            ) as adapter:
+                details = await adapter.get_recording_details(
+                    Identifier("musicbrainz:recording", RID)
+                )
+                assert details is not None
+                assert details.recording.duration_ms == 234000
+                assert details.recording.artists[0].name == "Collective Soul"
+                assert details.releases[0].title == "Home"
+                assert details.releases[0].date == "1995-03-14"
+                assert details.releases[1].date is None
+
+    run(scenario())
+
+
+def test_recording_details_not_found() -> None:
+    async def scenario() -> None:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda request: httpx.Response(404)
+        )) as client:
+            async with MusicBrainzAdapter(
+                contact="dev@example.org", client=client, min_interval=0
+            ) as adapter:
+                assert await adapter.get_recording_details(
+                    Identifier("musicbrainz:recording", RID)
+                ) is None
+
+    run(scenario())
