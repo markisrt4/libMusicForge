@@ -143,3 +143,15 @@ python examples/compare_tracks.py \
 ```
 
 Supported sorting: `--sort listeners` (default), `--sort scrobbles`, or `--sort ratio`. Add `--ascending` to reverse the default descending order. The library function `musicforge.analytics.compare_tracks(provider, tracks, sort_by="listeners")` returns typed `TrackComparison` records. A ratio is undefined when listener count is zero or missing. These are Last.fm statistics only, not estimated worldwide streams.
+
+## Cross-provider track lookup
+
+MusicBrainz identifies recording candidates while Last.fm reports artist/title-level listening totals. The library **does not** claim that Last.fm statistics belong to any one MusicBrainz recording.
+
+```bash
+export LASTFM_API_KEY="your-api-key"
+export MUSICBRAINZ_CONTACT="you@example.com"
+python examples/identify_track.py "Collective Soul" "Burn"
+```
+
+Programmatic entry point: `musicforge.identification.identify_and_enrich(metadata, statistics, artist, title)`. It returns `EnrichedTrack` with all MusicBrainz candidates, separate Last.fm statistics, and `verified_recording_match=False`. Future work can introduce explicit identifier-based matching when supported by providers.
