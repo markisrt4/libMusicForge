@@ -5,6 +5,8 @@ the User-Agent and respect MusicBrainz's published rate-limit requirements.
 """
 
 import asyncio
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from typing import Any
 from uuid import UUID
 
@@ -13,7 +15,7 @@ import httpx
 from musicforge.models import Artist, Identifier, Recording, Release
 
 _BASE_URL = "https://musicbrainz.org/ws/2"
-_MB = "musicbrainz"
+_RETRYABLE = {429, 502, 503, 504}
 
 
 class MusicBrainzError(RuntimeError):
@@ -35,15 +37,19 @@ class MusicBrainzAdapter:
         app_version: str = "0.1.0",
         client: httpx.AsyncClient | None = None,
         min_interval: float = 1.1,
+        max_retries: int = 2,
     ) -> None:
         if not contact.strip():
             raise ValueError("MusicBrainz requires a nonempty contact address")
+        if max_retries < 0:
+            raise ValueError("max_retries must not be negative")
         if min_interval < 0:
             raise ValueError("min_interval must not be negative")
         self._client = client or httpx.AsyncClient(timeout=15.0)
         self._owns_client = client is None
         self._user_agent = f"{app_name}/{app_version} ({contact})"
         self._min_interval = min_interval
+        self._max_retries = max_retries
         self._lock = asyncio.Lock()
         self._last_request: float | None = None
 
@@ -60,25 +66,53 @@ class MusicBrainzAdapter:
     async def _get(self, path: str, params: dict[str, str]) -> dict[str, Any]:
         async with self._lock:
             loop = asyncio.get_running_loop()
-            if self._last_request is not None:
-                wait = self._min_interval - (loop.time() - self._last_request)
-                if wait > 0:
-                    await asyncio.sleep(wait)
-            # Account for failed requests too; do not hammer the server.
-            self._last_request = loop.time()
-            try:
-                response = await self._client.get(
-                    f"{_BASE_URL}/{path}",
-                    params={**params, "fmt": "json"},
-                    headers={"User-Agent": self._user_agent},
-                )
-                response.raise_for_status()
-                payload = response.json()
-            except (httpx.HTTPError, ValueError) as exc:
-                raise MusicBrainzError(f"MusicBrainz request failed: {exc}") from exc
-            if not isinstance(payload, dict):
-                raise MusicBrainzError("MusicBrainz returned a non-object response")
-            return payload
+            for attempt in range(self._max_retries + 1):
+                if self._last_request is not None:
+                    wait = self._min_interval - (loop.time() - self._last_request)
+                    if wait > 0:
+                        await asyncio.sleep(wait)
+                self._last_request = loop.time()
+                try:
+                    response = await self._client.get(
+                        f"{_BASE_URL}/{path}",
+                        params={**params, "fmt": "json"},
+                        headers={"User-Agent": self._user_agent},
+                    )
+                    response.raise_for_status()
+                    payload = response.json()
+                except httpx.HTTPStatusError as exc:
+                    if (
+                        exc.response.status_code in _RETRYABLE
+                        and attempt < self._max_retries
+                    ):
+                        delay = min(2.0 * (2 ** attempt), 15.0)
+                        retry_after = exc.response.headers.get("Retry-After")
+                        if retry_after:
+                            try:
+                                delay = max(delay, float(retry_after))
+                            except ValueError:
+                                try:
+                                    when = parsedate_to_datetime(retry_after)
+                                    delay = max(
+                                        delay,
+                                        (when - datetime.now(timezone.utc)).total_seconds(),
+                                    )
+                                except (TypeError, ValueError, OverflowError):
+                                    pass
+                        await asyncio.sleep(max(0.0, min(delay, 60.0)))
+                        continue
+                    raise MusicBrainzError(
+                        f"MusicBrainz HTTP {exc.response.status_code}"
+                    ) from exc
+                except (httpx.TransportError, ValueError) as exc:
+                    if isinstance(exc, httpx.TransportError) and attempt < self._max_retries:
+                        await asyncio.sleep(min(2.0 * (2 ** attempt), 15.0))
+                        continue
+                    raise MusicBrainzError(f"MusicBrainz request failed: {exc}") from exc
+                if not isinstance(payload, dict):
+                    raise MusicBrainzError("MusicBrainz returned a non-object response")
+                return payload
+            raise AssertionError("unreachable retry state")
 
     async def search_recordings(self, artist: str, title: str) -> list[Recording]:
         """Search recordings; results may represent multiple performances."""
