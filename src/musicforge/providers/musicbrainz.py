@@ -5,6 +5,7 @@ the User-Agent and respect MusicBrainz's published rate-limit requirements.
 """
 
 import asyncio
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Any
@@ -20,6 +21,19 @@ _RETRYABLE = {429, 502, 503, 504}
 
 class MusicBrainzError(RuntimeError):
     """MusicBrainz request or response could not be processed."""
+
+
+@dataclass(frozen=True, slots=True)
+class ReleaseSummary:
+    title: str
+    date: str | None
+    identifier: Identifier
+
+
+@dataclass(frozen=True, slots=True)
+class RecordingDetails:
+    recording: Recording
+    releases: tuple[ReleaseSummary, ...] = ()
 
 
 class MusicBrainzAdapter:
@@ -122,6 +136,28 @@ class MusicBrainzAdapter:
         data = await self._get("recording", {"query": query, "limit": "25"})
         return [_recording(item) for item in data.get("recordings", [])
                 if isinstance(item, dict) and item.get("title")]
+
+    async def get_recording_details(self, identifier: Identifier) -> "RecordingDetails | None":
+        """Fetch release context for a specific MusicBrainz recording."""
+        _validate(identifier, "recording")
+        try:
+            data = await self._get(
+                f"recording/{identifier.value}", {"inc": "artist-credits+releases"}
+            )
+        except MusicBrainzError as exc:
+            if _is_not_found(exc):
+                return None
+            raise
+        releases = tuple(
+            ReleaseSummary(
+                title=str(item.get("title", "")),
+                date=str(item.get("date", "")) or None,
+                identifier=Identifier("musicbrainz:release", str(item["id"])),
+            )
+            for item in data.get("releases", [])
+            if isinstance(item, dict) and item.get("id") and item.get("title")
+        )
+        return RecordingDetails(recording=_recording(data), releases=releases)
 
     async def get_recording(self, identifier: Identifier) -> Recording | None:
         _validate(identifier, "recording")
