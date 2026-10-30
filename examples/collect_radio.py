@@ -24,7 +24,7 @@ from collect_radio_icy import listen as listen_icy
 
 
 # Sequence is meaningful for HLS, and only process-local for ICY.
-type Observation = tuple[str, str, datetime, int | None, str]
+Observation = tuple[str, str, datetime, int | None, str]
 
 
 async def collect_hls(
