@@ -41,7 +41,7 @@ def inspect_html(html: str) -> dict[str, object]:
         except json.JSONDecodeError:
             ld_types.append({"error": "invalid_json_ld"})
     time_tags = list(re.finditer(r"<time\b[^>]*\bdatetime=[\x27\x22][^\x27\x22]+[\x27\x22][^>]*>", html, re.I))
-    time_tag = time_tags[-1] if time_tags else None
+    time_tag = max(time_tags, key=lambda m: m.group(0)) if time_tags else None
     context = None
     if time_tag:
         context = html[max(0, time_tag.start() - 800):time_tag.end() + 800]
@@ -51,6 +51,7 @@ def inspect_html(html: str) -> dict[str, object]:
     return {
         "json_ld_summary": ld_types,
         "latest_timestamp_context": context,
+        "newest_timestamp_tag": time_tag.group(0) if time_tag else None,
         "latest_timestamp_html_excerpt": (
             html[max(0, time_tag.start() - 250):time_tag.end() + 300]
             .replace("\\n", " ")[:600] if time_tag else None
