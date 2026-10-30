@@ -41,6 +41,7 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
         latest = None
 
         player_process: subprocess.Popen | None = None
+        volume = 70
 
         def player_command(command: str) -> None:
             nonlocal status, player_process
@@ -60,7 +61,8 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
                 try:
                     player_process = subprocess.Popen(
                         ["ffplay", "-nodisp", "-autoexit", "-loglevel", "error",
-                         "-nostats", str(path)],
+                         "-nostats", "-volume", str(volume),
+                         "-ss", str(min(frame_index * fft_size / rate, duration)), str(path)],
                         stdin=subprocess.DEVNULL,
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
@@ -80,6 +82,14 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
                 key = screen.getch()
                 if key in (ord("q"), ord("Q"), 27):
                     break
+                if key in (ord("+"), ord("="), ord("-"), ord("_")):
+                    new_volume = max(0, min(100, volume + (10 if key in (ord("+"), ord("=")) else -10)))
+                    if new_volume != volume:
+                        volume = new_volume
+                        if playback:
+                            player_command("stop")
+                            player_command("play")
+                        status = f"Volume: {volume}% (FFplay restarts on volume changes)"
                 if key in (ord("r"), ord("R")):
                     if playback:
                         player_command("stop")
@@ -117,7 +127,7 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
                 line(0, "libMusicForge | WAV Analysis TUI")
                 line(1, f"{path.name} | {rate} Hz | {channels} ch | {width * 8} bit")
                 line(2, f"{audio_time:6.1f}/{duration:.1f}s | {'FINISHED' if finished else 'RUNNING'} | {'FFPLAY' if playback else 'SILENT'}")
-                line(3, "q quit | r restart | --play enables Android media playback")
+                line(3, f"q quit | r restart | +/- volume: {volume}% | --play FFplay")
                 line(4, status)
                 if latest is not None:
                     width_bar = max(4, min(32, columns - 21))
