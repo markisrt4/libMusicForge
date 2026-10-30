@@ -11,6 +11,7 @@ class SourceStatus(str, Enum):
     EMPTY_METADATA = "empty_metadata"
     NO_SONGS = "no_songs"
     ERROR = "error"
+    STALE = "stale"
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,8 @@ def classify_icy_health(
     station: str, *, blocks: int, parsed: int, changes: int,
     seconds_connected: float, minimum_seconds: float = 90.0,
     error: str | None = None,
+    seconds_since_song: float | None = None,
+    stale_after_seconds: float = 900.0,
 ) -> SourceHealth:
     """Avoid declaring a station unhealthy before sufficient observation time.
 
@@ -41,6 +44,8 @@ def classify_icy_health(
         status = SourceStatus.EMPTY_METADATA
     elif changes == 0:
         status = SourceStatus.NO_SONGS
+    elif seconds_since_song is not None and seconds_since_song >= stale_after_seconds:
+        status = SourceStatus.STALE
     else:
         status = SourceStatus.HEALTHY
     return SourceHealth(station, status, blocks, parsed, changes,
