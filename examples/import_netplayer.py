@@ -17,6 +17,9 @@ from musicforge.airplay.storage import AirplayStore
 
 STATIONS = {
     "WRIF": "https://netplayer.net/radio/101-wrif-64370/recently-played",
+    "WNIC": "https://netplayer.net/radio/100-3-wnic-34832/recently-played",
+    "WOMC": "https://netplayer.net/radio/104-3-womc-detroit-95098/recently-played",
+    "WYCD": "https://netplayer.net/radio/99-5-wycd-57061/recently-played",
 }
 
 
@@ -49,10 +52,16 @@ async def import_station(station: str, url: str, database: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--station", choices=sorted(STATIONS), default="WRIF")
+    parser.add_argument("--station", choices=sorted(STATIONS) + ["all"], default="WRIF")
     parser.add_argument("--database", default="airplay.sqlite3")
     args = parser.parse_args()
-    asyncio.run(import_station(args.station, STATIONS[args.station], args.database))
+    async def run() -> None:
+        for station in (sorted(STATIONS) if args.station == "all" else [args.station]):
+            try:
+                await import_station(station, STATIONS[station], args.database)
+            except (httpx.HTTPError, ValueError) as exc:
+                print(f"{station}: import failed: {type(exc).__name__}: {exc}", flush=True)
+    asyncio.run(run())
 
 
 if __name__ == "__main__":
