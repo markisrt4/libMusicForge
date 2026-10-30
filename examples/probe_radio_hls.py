@@ -11,6 +11,7 @@ from urllib.parse import urljoin
 import httpx
 
 from musicforge.airplay import parse_media_playlist, song_observations
+from musicforge.airplay.diagnostics import diagnose_playlist
 
 
 async def inspect(name: str, url: str) -> None:
@@ -32,6 +33,10 @@ async def inspect(name: str, url: str) -> None:
     print(f"{name}: {len(playlist.segments)} segments, "
           f"{playlist.duration_seconds:.1f}s playlist coverage, "
           f"{playlist.timestamped_duration_seconds:.1f}s timestamped")
+    diagnostics = diagnose_playlist(playlist)
+    print(f"  wall_span={diagnostics.wall_span_seconds}s "
+          f"gaps={diagnostics.gaps_seconds} "
+          f"overlaps={diagnostics.overlaps_seconds}")
     if playlist.segments:
         print(f"  first={playlist.segments[0].started_at} "
               f"last={playlist.segments[-1].started_at}")
