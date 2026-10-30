@@ -8,7 +8,8 @@ from time import monotonic
 
 import httpx
 
-from musicforge.airplay.icy import IcyMetadataDecoder, song_label
+from musicforge.airplay.icy import (IcyMetadataDecoder, song_label,
+                                   song_rejection_reason, safe_icy_title)
 from musicforge.airplay.health import classify_icy_health
 from musicforge.airplay.storage import AirplayStore
 
@@ -20,6 +21,7 @@ async def listen(station: str, url: str, queue: asyncio.Queue[tuple[str, str, da
     next_report = monotonic() + diagnostics_interval
     connected_since: float | None = None
     last_song_at: float | None = None
+    rejection_counts: dict[str, int] = {}
     async with httpx.AsyncClient(
         follow_redirects=True, timeout=httpx.Timeout(20, read=None)
     ) as client:
@@ -46,6 +48,11 @@ async def listen(station: str, url: str, queue: asyncio.Queue[tuple[str, str, da
                             label = song_label(fields)
                             if label is None:
                                 ignored += 1
+                                reason = song_rejection_reason(fields) or 'unknown'
+                                rejection_counts[reason] = rejection_counts.get(reason, 0) + 1
+                                if rejection_counts[reason] <= 3:
+                                    print(f'{station}: ignored reason={reason} '
+                                          f'title={safe_icy_title(fields)!r}', flush=True)
                             elif label == previous:
                                 repeats += 1
                             else:
@@ -68,7 +75,7 @@ async def listen(station: str, url: str, queue: asyncio.Queue[tuple[str, str, da
                                   f"empty={empty + decoder.empty_blocks} "
                                   f"parsed={parsed + decoder.parsed_blocks} "
                                   f"ignored={ignored} repeated={repeats} "
-                                  f"changes={changes}", flush=True)
+                                  f"changes={changes} rejected={rejection_counts}", flush=True)
                             next_report = monotonic() + diagnostics_interval
                     print(f"{station}: stream ended; reconnecting", flush=True)
             except (httpx.HTTPError, ValueError, OSError) as exc:
