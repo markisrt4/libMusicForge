@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 from datetime import datetime
 
-from .hls import HlsPlaylist, HlsSegment, song_observations
+from .hls import HlsPlaylist, HlsSegment
 
 
 @dataclass(frozen=True)
@@ -39,19 +40,42 @@ def diagnose_playlist(playlist: HlsPlaylist) -> PlaylistDiagnostics:
 
 
 class HlsObservationTracker:
-    """Deduplicate segment observations across overlapping playlist snapshots.
+    """Emit candidate song changes across overlapping HLS playlist snapshots.
 
-    This is NOT a play counter: same song across separate sequences may be
-    the same continuous play, and titles can include non-music material.
+    Keeps per-station continuity and ignores previously processed segments.
+    This is not an authoritative play counter: missing playlist intervals,
+    metadata errors and station breaks can conceal transitions.
     """
+
     def __init__(self) -> None:
-        self._seen: set[tuple[str, int, datetime | None, str]] = set()
+        self._last_title: dict[str, str | None] = {}
+        self._last_position: dict[str, tuple[datetime | None, int]] = {}
 
     def observe(self, station: str, playlist: HlsPlaylist) -> tuple[HlsSegment, ...]:
         observations: list[HlsSegment] = []
-        for segment in song_observations(playlist):
-            key = (station, segment.sequence, segment.started_at, segment.title)
-            if key not in self._seen:
-                observations.append(segment)
-                self._seen.add(key)
+        last_title = self._last_title.get(station)
+        last_position = self._last_position.get(station)
+
+        for segment in playlist.segments:
+            position = (segment.started_at, segment.sequence)
+            if last_position is not None:
+                prior_time, prior_sequence = last_position
+                if segment.started_at is not None and prior_time is not None:
+                    if segment.started_at <= prior_time:
+                        continue
+                elif segment.sequence <= prior_sequence:
+                    continue
+
+            title = segment.title.strip()
+            if not title or urlsplit(title).scheme.lower() in ("http", "https") or " - " not in title:
+                last_title = None
+            else:
+                if title != last_title:
+                    observations.append(segment)
+                last_title = title
+            last_position = position
+
+        self._last_title[station] = last_title
+        if last_position is not None:
+            self._last_position[station] = last_position
         return tuple(observations)
