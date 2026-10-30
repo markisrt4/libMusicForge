@@ -51,6 +51,10 @@ def inspect_html(html: str) -> dict[str, object]:
     return {
         "json_ld_summary": ld_types,
         "latest_timestamp_context": context,
+        "latest_timestamp_html_excerpt": (
+            html[max(0, time_tag.start() - 250):time_tag.end() + 300]
+            .replace("\\n", " ")[:600] if time_tag else None
+        ),
         "page_title": clean_title,
         "structured_script_types": scripts,
         "html_time_elements": len(times),
