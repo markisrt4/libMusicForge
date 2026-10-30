@@ -24,7 +24,7 @@ class AirplayStore:
         self.connection.commit()
 
     def add(self, station: str, label: str, observed_at: datetime | None,
-            segment_sequence: int) -> bool:
+            segment_sequence: int, *, source: str = "hls") -> bool:
         if observed_at is None or " - " not in label:
             return False
         artist, title = label.split(" - ", 1)
@@ -32,10 +32,10 @@ class AirplayStore:
             return False
         cursor = self.connection.execute(
             """INSERT OR IGNORE INTO airplay_observations
-               (station, artist, title, observed_at, segment_sequence)
-               VALUES (?, ?, ?, ?, ?)""",
+               (station, artist, title, observed_at, segment_sequence, source)
+               VALUES (?, ?, ?, ?, ?, ?)""",
             (station, artist.strip(), title.strip(), observed_at.isoformat(),
-             segment_sequence),
+             segment_sequence, source),
         )
         self.connection.commit()
         return cursor.rowcount == 1
