@@ -68,7 +68,9 @@ class HlsObservationTracker:
 
             title = segment.title.strip()
             if not title or urlsplit(title).scheme.lower() in ("http", "https") or " - " not in title:
-                last_title = None
+                # Unknown/ad segments do not prove the current song ended.
+                # Preserve last known song until a different valid title arrives.
+                pass
             else:
                 if title != last_title:
                     observations.append(segment)
