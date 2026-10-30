@@ -34,34 +34,46 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
             raise ValueError("Unsupported WAV encoding")
         duration = wav.getnframes() / rate
         analyzer = MusicAnalyzer(fft_size=fft_size, band_count=24)
-        player_available = shutil.which("termux-media-player") is not None
+        player_available = shutil.which("ffplay") is not None
         playback = play and player_available
         status = "Ready"
         frame_index = 0
         start = time.monotonic()
         latest = None
 
+        player_process: subprocess.Popen | None = None
+
         def player_command(command: str) -> None:
-            nonlocal status
-            def worker() -> None:
-                nonlocal status
+            nonlocal status, player_process
+            if not playback:
+                return
+            if command == "stop":
+                if player_process is not None and player_process.poll() is None:
+                    player_process.terminate()
+                    try:
+                        player_process.wait(timeout=1)
+                    except subprocess.TimeoutExpired:
+                        player_process.kill()
+                        player_process.wait()
+                player_process = None
+                return
+            if command == "play":
                 try:
-                    result = subprocess.run(
-                        ["termux-media-player", command, str(path)] if command == "play"
-                        else ["termux-media-player", command],
-                        capture_output=True, text=True, timeout=8, check=False,
+                    player_process = subprocess.Popen(
+                        ["ffplay", "-nodisp", "-autoexit", "-loglevel", "error",
+                         "-nostats", str(path)],
+                        stdin=subprocess.DEVNULL,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
                     )
-                    if result.returncode:
-                        status = (result.stderr or result.stdout or "Playback failed").strip()[:100]
-                    else:
-                        status = "Media command accepted; playback sync not guaranteed"
-                except (subprocess.TimeoutExpired, OSError) as exc:
-                    status = f"Media player unavailable: {exc}"[:100]
-            threading.Thread(target=worker, daemon=True).start()
+                    status = "FFplay started (timing is approximate)"
+                except OSError as exc:
+                    status = f"FFplay launch failed: {exc}"
+
         if playback:
             player_command("play")
         elif play:
-            status = "termux-media-player unavailable; analyzing without sound"
+            status = "ffplay unavailable; analyzing without sound"
         else:
             status = "Analysis only (use --play for Android audio)"
         try:
@@ -105,7 +117,7 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
 
                 line(0, "libMusicForge | WAV Analysis TUI")
                 line(1, f"{path.name} | {rate} Hz | {channels} ch | {width * 8} bit")
-                line(2, f"{audio_time:6.1f}/{duration:.1f}s | {'FINISHED' if finished else 'RUNNING'} | {'PLAY REQUESTED' if playback else 'SILENT'}")
+                line(2, f"{audio_time:6.1f}/{duration:.1f}s | {'FINISHED' if finished else 'RUNNING'} | {'FFPLAY' if playback else 'SILENT'}")
                 line(3, "q quit | r restart | --play enables Android media playback")
                 line(4, status)
                 if latest is not None:
