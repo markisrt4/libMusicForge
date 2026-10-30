@@ -11,11 +11,71 @@ import asyncio
 import re
 from datetime import datetime, timezone
 from html import unescape
+from html.parser import HTMLParser
 from urllib.parse import urlsplit
 
 import httpx
 
 WRIF_URL = "https://netplayer.net/radio/101-wrif-64370/recently-played"
+
+
+
+class RowInspector(HTMLParser):
+    """Find timestamp-bearing ancestor elements and their visible text."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.stack: list[dict[str, object]] = []
+        self.rows: list[dict[str, object]] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attributes = dict(attrs)
+        node: dict[str, object] = {"tag": tag, "class": attributes.get("class", ""), "text": []}
+        self.stack.append(node)
+        if tag == "time" and (attributes.get("datetime") or attributes.get("dateTime")):
+            stamp = attributes.get("datetime") or attributes.get("dateTime")
+            # Netplayer uses a station header time plus per-song times.
+            candidates = [
+                n for n in reversed(self.stack[:-1])
+                if n["tag"] in ("div", "article", "li")
+            ]
+            self.rows.append({
+                "timestamp": stamp,
+                "ancestors": [{"tag": n["tag"], "class": n["class"]} for n in candidates[:7]],
+                "nodes": candidates[:7],
+            })
+
+    def handle_data(self, data: str) -> None:
+        for node in self.stack:
+            node["text"].append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        for i in range(len(self.stack) - 1, -1, -1):
+            if self.stack[i]["tag"] == tag:
+                del self.stack[i:]
+                return
+
+
+def row_samples(html: str) -> list[dict[str, object]]:
+    parser = RowInspector()
+    parser.feed(html)
+    results = []
+    for row in parser.rows:
+        if len(results) >= 4:
+            break
+        ancestors = row["nodes"]
+        texts = [
+            {"class": n["class"], "text": re.sub(r"\\s+", " ", "".join(n["text"])).strip()[:400]}
+            for n in ancestors
+        ]
+        if any("Playlist updated" in item["text"] for item in texts[:3]):
+            continue
+        results.append({
+            "timestamp": row["timestamp"],
+            "ancestors": row["ancestors"],
+            "ancestor_texts": texts,
+        })
+    return results
 
 
 def inspect_html(html: str) -> dict[str, object]:
@@ -63,6 +123,7 @@ def inspect_html(html: str) -> dict[str, object]:
         if len(timestamp_samples) == 3:
             break
     return {
+        "song_container_samples": row_samples(html),
         "timestamp_row_samples": timestamp_samples,
         "json_ld_summary": ld_types,
         "latest_timestamp_context": context,
