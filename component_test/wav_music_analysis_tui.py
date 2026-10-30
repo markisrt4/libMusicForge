@@ -7,7 +7,6 @@ import argparse
 import curses
 import shutil
 import subprocess
-import threading
 import time
 import wave
 from pathlib import Path
@@ -151,11 +150,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("wav", type=Path)
     parser.add_argument("--fft-size", type=int, default=2048)
-    parser.add_argument("--play", action="store_true", help="Play WAV using Termux:API media player")
+    parser.add_argument("--play", action="store_true", help="Play WAV using FFplay")
     args = parser.parse_args()
     if not args.wav.is_file():
         parser.error(f"File not found: {args.wav}")
-    curses.wrapper(run, args.wav.resolve(), args.fft_size, args.play)
+    try:
+        curses.wrapper(run, args.wav.resolve(), args.fft_size, args.play)
+    except KeyboardInterrupt:
+        # Ctrl+C is a normal exit; run() cleans up FFplay in its finally block.
+        pass
 
 
 if __name__ == "__main__":
