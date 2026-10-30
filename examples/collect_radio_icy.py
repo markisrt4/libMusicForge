@@ -19,6 +19,7 @@ async def listen(station: str, url: str, queue: asyncio.Queue[tuple[str, str, da
     bytes_seen = changes = ignored = repeats = blocks = empty = parsed = 0
     next_report = monotonic() + diagnostics_interval
     connected_since: float | None = None
+    last_song_at: float | None = None
     async with httpx.AsyncClient(
         follow_redirects=True, timeout=httpx.Timeout(20, read=None)
     ) as client:
@@ -50,12 +51,15 @@ async def listen(station: str, url: str, queue: asyncio.Queue[tuple[str, str, da
                             else:
                                 previous = label
                                 changes += 1
+                                last_song_at = monotonic()
                                 await queue.put((station, label, datetime.now(timezone.utc)))
                         if monotonic() >= next_report:
                             status = classify_icy_health(
                                 station, blocks=blocks + decoder.blocks_seen,
                                 parsed=parsed + decoder.parsed_blocks,
                                 changes=changes,
+                                seconds_since_song=(monotonic() - last_song_at)
+                                if last_song_at is not None else None,
                                 seconds_connected=monotonic() - connected_since
                                 if connected_since is not None else 0.0,
                             )
