@@ -28,7 +28,7 @@ def song_label(fields: dict[str, str]) -> str | None:
     if rich:
         return f"{rich.group(1).strip()} - {rich.group(2).strip()}"
     # Never accept a broken iHeart text="..." attribute as a plain title.
-    if re.search(r'(?:^|\\s)text="', title):
+    if re.search(r'(?:^|\s)text="', title):
         return None
     # Some stations put metadata attributes outside StreamTitle.
     title = re.sub(r'\s+song_spot="[^"]*".*$', "", title)
@@ -50,7 +50,7 @@ def song_rejection_reason(fields: dict[str, str]) -> str | None:
     embedded = re.search(r'(?:^|\s)song_spot="([^"]+)"', title, re.IGNORECASE)
     if embedded and embedded.group(1).upper() != "M":
         return "nonmusic_marker"
-    if re.search(r'(?:^|\\s)text="', title):
+    if re.search(r'(?:^|\s)text="', title):
         return "incomplete_rich_title"
     if " - " not in title:
         return "unrecognized_format"
