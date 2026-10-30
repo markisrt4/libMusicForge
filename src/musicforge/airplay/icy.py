@@ -19,6 +19,10 @@ def song_label(fields: dict[str, str]) -> str | None:
     title = fields.get("streamtitle", "").strip()
     if not title or fields.get("song_spot", "M").upper() != "M":
         return None
+    # iHeart embeds song_spot inside StreamTitle rather than as an ICY field.
+    embedded_spot = re.search(r'(?:^|\\s)song_spot="([^"]+)"', title, re.IGNORECASE)
+    if embedded_spot and embedded_spot.group(1).upper() != "M":
+        return None
     # iHeart sends: Artist - text="Title" song_spot="M" ...
     rich = re.match(r'^(.+?)\s+-\s+text="([^"]+)"', title)
     if rich:
