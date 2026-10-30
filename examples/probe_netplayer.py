@@ -48,7 +48,22 @@ def inspect_html(html: str) -> dict[str, object]:
         context = re.sub(r"<script\b.*?</script>", "[script omitted]", context, flags=re.I | re.S)
         context = re.sub(r'<[^>]+>', " ", context)
         context = unescape(re.sub(r"\s+", " ", context)).strip()[:1000]
+    # Show the structural context for several time elements, excluding the
+    # station-level "Playlist updated" timestamp.
+    timestamp_samples = []
+    for tag in time_tags:
+        before = html[max(0, tag.start() - 1100):tag.start()]
+        if "Playlist updated" in before[-120:]:
+            continue
+        nearby = html[max(0, tag.start() - 550):tag.end() + 150]
+        timestamp_samples.append({
+            "time_tag": tag.group(0),
+            "preceding_html": nearby[:700],
+        })
+        if len(timestamp_samples) == 3:
+            break
     return {
+        "timestamp_row_samples": timestamp_samples,
         "json_ld_summary": ld_types,
         "latest_timestamp_context": context,
         "newest_timestamp_tag": time_tag.group(0) if time_tag else None,
