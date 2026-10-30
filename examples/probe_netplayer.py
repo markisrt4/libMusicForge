@@ -40,16 +40,17 @@ def inspect_html(html: str) -> dict[str, object]:
                     ld_types.append({"type": item.get("@type"), "keys": sorted(item.keys())[:20]})
         except json.JSONDecodeError:
             ld_types.append({"error": "invalid_json_ld"})
-    time_tag = re.search(r"<time\b[^>]*\bdatetime=[\x27\x22][^\x27\x22]+[\x27\x22][^>]*>", html, re.I)
+    time_tags = list(re.finditer(r"<time\b[^>]*\bdatetime=[\x27\x22][^\x27\x22]+[\x27\x22][^>]*>", html, re.I))
+    time_tag = time_tags[-1] if time_tags else None
     context = None
     if time_tag:
-        context = html[max(0, time_tag.start() - 350):time_tag.end() + 350]
+        context = html[max(0, time_tag.start() - 800):time_tag.end() + 800]
         context = re.sub(r"<script\b.*?</script>", "[script omitted]", context, flags=re.I | re.S)
         context = re.sub(r'<[^>]+>', " ", context)
-        context = unescape(re.sub(r"\s+", " ", context)).strip()[:500]
+        context = unescape(re.sub(r"\s+", " ", context)).strip()[:1000]
     return {
         "json_ld_summary": ld_types,
-        "first_timestamp_context": context,
+        "latest_timestamp_context": context,
         "page_title": clean_title,
         "structured_script_types": scripts,
         "html_time_elements": len(times),
