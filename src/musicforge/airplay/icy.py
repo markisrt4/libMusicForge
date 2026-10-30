@@ -27,6 +27,9 @@ def song_label(fields: dict[str, str]) -> str | None:
     rich = re.match(r'^(.+?)\s+-\s+text="([^"]+)"', title)
     if rich:
         return f"{rich.group(1).strip()} - {rich.group(2).strip()}"
+    # Never accept a broken iHeart text="..." attribute as a plain title.
+    if re.search(r'(?:^|\\s)text="', title):
+        return None
     # Some stations put metadata attributes outside StreamTitle.
     title = re.sub(r'\s+song_spot="[^"]*".*$', "", title)
     if " - " not in title:
@@ -47,6 +50,8 @@ def song_rejection_reason(fields: dict[str, str]) -> str | None:
     embedded = re.search(r'(?:^|\s)song_spot="([^"]+)"', title, re.IGNORECASE)
     if embedded and embedded.group(1).upper() != "M":
         return "nonmusic_marker"
+    if re.search(r'(?:^|\\s)text="', title):
+        return "incomplete_rich_title"
     if " - " not in title:
         return "unrecognized_format"
     return "invalid_song_fields"
@@ -54,7 +59,10 @@ def song_rejection_reason(fields: dict[str, str]) -> str | None:
 
 def safe_icy_title(fields: dict[str, str], max_length: int = 100) -> str:
     """Bound diagnostic output and avoid logging embedded stream attributes."""
-    title = fields.get("streamtitle", "").split(' song_spot=', 1)[0]
+    title = fields.get("streamtitle", "")
+    if "adContext=" in title or title.startswith("adContext="):
+        return "[advertising metadata]"
+    title = title.split(' song_spot=', 1)[0]
     title = re.sub(r'[\x00-\x1f\x7f]+', " ", title).strip()
     return title[:max_length]
 
