@@ -35,6 +35,30 @@ def song_label(fields: dict[str, str]) -> str | None:
     return f"{artist.strip()} - {song.strip()}" if artist.strip() and song.strip() else None
 
 
+def song_rejection_reason(fields: dict[str, str]) -> str | None:
+    """Explain rejection without changing the accepted-song parser."""
+    if song_label(fields) is not None:
+        return None
+    title = fields.get("streamtitle", "").strip()
+    if not title:
+        return "missing_title"
+    if fields.get("song_spot", "M").upper() != "M":
+        return "nonmusic_marker"
+    embedded = re.search(r'(?:^|\s)song_spot="([^"]+)"', title, re.IGNORECASE)
+    if embedded and embedded.group(1).upper() != "M":
+        return "nonmusic_marker"
+    if " - " not in title:
+        return "unrecognized_format"
+    return "invalid_song_fields"
+
+
+def safe_icy_title(fields: dict[str, str], max_length: int = 100) -> str:
+    """Bound diagnostic output and avoid logging embedded stream attributes."""
+    title = fields.get("streamtitle", "").split(' song_spot=', 1)[0]
+    title = re.sub(r'[\x00-\x1f\x7f]+', " ", title).strip()
+    return title[:max_length]
+
+
 class IcyMetadataDecoder:
     """Consume arbitrary stream chunks and emit each nonempty metadata block."""
 
