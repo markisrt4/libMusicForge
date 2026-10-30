@@ -9,6 +9,7 @@ from time import monotonic
 import httpx
 
 from musicforge.airplay.icy import IcyMetadataDecoder, song_label
+from musicforge.airplay.health import classify_icy_health
 from musicforge.airplay.storage import AirplayStore
 
 
@@ -17,6 +18,7 @@ async def listen(station: str, url: str, queue: asyncio.Queue[tuple[str, str, da
     previous: str | None = None
     bytes_seen = changes = ignored = repeats = blocks = empty = parsed = 0
     next_report = monotonic() + diagnostics_interval
+    connected_since: float | None = None
     async with httpx.AsyncClient(
         follow_redirects=True, timeout=httpx.Timeout(20, read=None)
     ) as client:
@@ -32,6 +34,7 @@ async def listen(station: str, url: str, queue: asyncio.Queue[tuple[str, str, da
                     if raw_interval is None:
                         raise ValueError("stream did not provide icy-metaint")
                     decoder = IcyMetadataDecoder(int(raw_interval))
+                    connected_since = monotonic()
                     print(f"{station}: connected status={response.status_code} "
                           f"metaint={decoder.metaint} "
                           f"type={response.headers.get('content-type', 'unknown')} "
@@ -49,7 +52,14 @@ async def listen(station: str, url: str, queue: asyncio.Queue[tuple[str, str, da
                                 changes += 1
                                 await queue.put((station, label, datetime.now(timezone.utc)))
                         if monotonic() >= next_report:
-                            print(f"{station}: health bytes={bytes_seen} "
+                            status = classify_icy_health(
+                                station, blocks=blocks + decoder.blocks_seen,
+                                parsed=parsed + decoder.parsed_blocks,
+                                changes=changes,
+                                seconds_connected=monotonic() - connected_since
+                                if connected_since is not None else 0.0,
+                            )
+                            print(f"{station}: health status={status.status.value} bytes={bytes_seen} "
                                   f"blocks={blocks + decoder.blocks_seen} "
                                   f"empty={empty + decoder.empty_blocks} "
                                   f"parsed={parsed + decoder.parsed_blocks} "
@@ -65,6 +75,7 @@ async def listen(station: str, url: str, queue: asyncio.Queue[tuple[str, str, da
                     blocks += decoder.blocks_seen
                     empty += decoder.empty_blocks
                     parsed += decoder.parsed_blocks
+            connected_since = None
             await asyncio.sleep(reconnect_seconds)
 
 
