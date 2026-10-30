@@ -7,7 +7,7 @@ from __future__ import annotations
 import argparse
 import sqlite3
 from datetime import date, datetime, time, timedelta, timezone
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 def day_bounds(day: date) -> tuple[str, str]:
