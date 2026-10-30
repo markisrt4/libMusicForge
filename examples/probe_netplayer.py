@@ -6,6 +6,7 @@ before developing an automated poller. No HTML or audio is saved.
 from __future__ import annotations
 
 import argparse
+import json
 import asyncio
 import re
 from datetime import datetime, timezone
@@ -27,7 +28,26 @@ def inspect_html(html: str) -> dict[str, object]:
     times = sorted(set(re.findall(
         r'<time\b[^>]*\bdatetime=["\']([^"\']{1,80})', html, re.I,
     )))
+    ld_types = []
+    for match in re.finditer(r'<script\\b[^>]*type=["\\']application/ld\\+json["\\'][^>]*>(.*?)</script>', html, re.I | re.S):
+        try:
+            data = json.loads(match.group(1))
+            items = data if isinstance(data, list) else [data]
+            for item in items:
+                if isinstance(item, dict):
+                    ld_types.append({"type": item.get("@type"), "keys": sorted(item.keys())[:20]})
+        except json.JSONDecodeError:
+            ld_types.append({"error": "invalid_json_ld"})
+    time_tag = re.search(r'<time\\b[^>]*\\bdatetime=["\\'][^"\\']+["\\'][^>]*>', html, re.I)
+    context = None
+    if time_tag:
+        context = html[max(0, time_tag.start() - 350):time_tag.end() + 350]
+        context = re.sub(r'<script\\b.*?</script>', "[script omitted]", context, flags=re.I | re.S)
+        context = re.sub(r'<[^>]+>', " ", context)
+        context = unescape(re.sub(r'\\s+', " ", context)).strip()[:500]
     return {
+        "json_ld_summary": ld_types,
+        "first_timestamp_context": context,
         "page_title": clean_title,
         "structured_script_types": scripts,
         "html_time_elements": len(times),
