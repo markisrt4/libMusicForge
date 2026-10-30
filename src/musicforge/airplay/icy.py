@@ -46,6 +46,9 @@ class IcyMetadataDecoder:
         self._metadata_left = 0
         self._metadata = bytearray()
         self._need_length = False
+        self.blocks_seen = 0
+        self.empty_blocks = 0
+        self.parsed_blocks = 0
 
     def feed(self, chunk: bytes) -> list[dict[str, str]]:
         events: list[dict[str, str]] = []
@@ -56,7 +59,9 @@ class IcyMetadataDecoder:
                 offset += 1
                 self._need_length = False
                 self._metadata.clear()
+                self.blocks_seen += 1
                 if self._metadata_left == 0:
+                    self.empty_blocks += 1
                     self._audio_left = self.metaint
                 continue
             if self._metadata_left:
@@ -67,6 +72,7 @@ class IcyMetadataDecoder:
                 if self._metadata_left == 0:
                     fields = parse_icy_metadata(bytes(self._metadata))
                     if fields:
+                        self.parsed_blocks += 1
                         events.append(fields)
                     self._audio_left = self.metaint
                 continue
