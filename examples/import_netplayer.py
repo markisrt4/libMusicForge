@@ -20,6 +20,12 @@ STATIONS = {
     "WNIC": "https://netplayer.net/radio/100-3-wnic-34832/recently-played",
     "WOMC": "https://netplayer.net/radio/104-3-womc-detroit-95098/recently-played",
     "WYCD": "https://netplayer.net/radio/99-5-wycd-57061/recently-played",
+    "WCSX": "https://netplayer.net/radio/94-7-wcsx-15859/recently-played",
+    "WDVD": "https://netplayer.net/radio/96-3-wdvd-42425/recently-played",
+    "WJLB": "https://netplayer.net/radio/97-9-wjlb-10376/recently-played",
+    "ALT987": "https://netplayer.net/radio/alt-98-7-detroit-35557/recently-played",
+    "BOUNCE1051": "https://netplayer.net/radio/105-1-the-bounce-63950/recently-played",
+    "KISS1059": "https://netplayer.net/radio/105-9-kiss-fm-97425/recently-played",
 }
 
 
