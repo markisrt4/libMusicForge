@@ -17,7 +17,11 @@ from time import monotonic
 
 import httpx
 
-from import_netplayer import STATIONS, import_station
+try:
+    from examples.import_netplayer import STATIONS, import_station
+except ModuleNotFoundError:
+    # Direct execution: python examples/collect_radio_netplayer.py
+    from import_netplayer import STATIONS, import_station
 
 
 def station_names(selection: str) -> list[str]:
