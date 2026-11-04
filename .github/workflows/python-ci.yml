@@ -1,14 +1,16 @@
 name: Python CI
-
 on:
   pull_request:
   push:
     branches: [main]
   workflow_dispatch:
-
+    inputs:
+      full_gate:
+        description: Run extended quality checks and package build
+        type: boolean
+        default: false
 permissions:
   contents: read
-
 jobs:
   tests:
     name: Python ${{ matrix.python-version }}
@@ -23,16 +25,37 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install package and test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e '.[analysis,dev]'
-      - name: Run unit tests
+      - name: Install project and test dependencies
+        run: python -m pip install -e '.[analysis,dev]'
+      - name: Unit tests
         run: python -m pytest -q --junitxml=test-results.xml
-      - name: Upload test report
+      - name: Upload JUnit report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: junit-python-${{ matrix.python-version }}
           path: test-results.xml
           if-no-files-found: ignore
+  quality:
+    if: github.event_name == 'workflow_dispatch' && inputs.full_gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install quality tools
+        run: python -m pip install -e '.[analysis,dev,quality]'
+      - name: Ruff
+        run: python -m ruff check .
+      - name: Mypy
+        run: python -m mypy
+      - name: Build distribution
+        run: python -m build
+      - name: Upload distributions
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: libmusicforge-distributions
+          path: dist/
