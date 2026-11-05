@@ -66,7 +66,7 @@ def test_api_error_and_malformed_counts() -> None:
             {"artist": {"name": "A", "stats": {"listeners": "not-a-number"}}},
         ):
             async with httpx.AsyncClient(transport=httpx.MockTransport(
-                lambda request: httpx.Response(200, json=payload)
+                lambda request, payload=payload: httpx.Response(200, json=payload)
             )) as client:
                 async with LastFmAdapter(api_key="test-key", client=client) as adapter:
                     with pytest.raises(LastFmError):
