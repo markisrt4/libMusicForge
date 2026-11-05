@@ -3,8 +3,9 @@
 Ratios describe Last.fm recorded listening, not global streaming popularity.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Protocol, Sequence
+from typing import Protocol
 
 from musicforge.models import Statistic
 
