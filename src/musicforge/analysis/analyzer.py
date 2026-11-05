@@ -8,8 +8,8 @@ from collections.abc import Sequence
 
 import numpy as np
 
-from .types import MusicAnalysisState, PercussionActivity
 from .interfaces import MusicAnalyzerIf
+from .types import MusicAnalysisState, PercussionActivity
 
 
 class MusicAnalyzer(MusicAnalyzerIf):
