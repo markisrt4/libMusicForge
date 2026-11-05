@@ -6,9 +6,9 @@ the User-Agent and respect MusicBrainz's published rate-limit requirements.
 
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
-from typing import Any
+from typing import Any, Self
 from uuid import UUID
 
 import httpx
@@ -67,7 +67,7 @@ class MusicBrainzAdapter:
         self._lock = asyncio.Lock()
         self._last_request: float | None = None
 
-    async def __aenter__(self) -> "MusicBrainzAdapter":
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(self, *_exc: object) -> None:
@@ -109,7 +109,7 @@ class MusicBrainzAdapter:
                                     when = parsedate_to_datetime(retry_after)
                                     delay = max(
                                         delay,
-                                        (when - datetime.now(timezone.utc)).total_seconds(),
+                                        (when - datetime.now(UTC)).total_seconds(),
                                     )
                                 except (TypeError, ValueError, OverflowError):
                                     pass
