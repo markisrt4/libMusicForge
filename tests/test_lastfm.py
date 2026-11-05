@@ -22,9 +22,9 @@ def test_artist_metrics_are_attributed() -> None:
         })
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            async with LastFmAdapter(api_key="test-key", client=client) as adapter:
-                stats = await adapter.artist_statistics("Collective Soul")
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+            LastFmAdapter(api_key="test-key", client=client) as adapter
+            stats = await adapter.artist_statistics("Collective Soul")
         assert [(s.metric, s.value, s.unit) for s in stats] == [
             ("global_listener_count", 12345, "listeners"),
             ("global_scrobble_count", 67890, "scrobbles"),
@@ -49,9 +49,9 @@ def test_track_metrics() -> None:
         })
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            async with LastFmAdapter(api_key="test-key", client=client) as adapter:
-                stats = await adapter.track_statistics("Collective Soul", "Burn")
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+            LastFmAdapter(api_key="test-key", client=client) as adapter
+            stats = await adapter.track_statistics("Collective Soul", "Burn")
         assert stats[0].subject.value == "Collective Soul::Burn"
         assert stats[1].metric == "global_scrobble_count"
         assert stats[1].value == 250
@@ -67,10 +67,10 @@ def test_api_error_and_malformed_counts() -> None:
         ):
             async with httpx.AsyncClient(transport=httpx.MockTransport(
                 lambda request, payload=payload: httpx.Response(200, json=payload)
-            )) as client:
-                async with LastFmAdapter(api_key="test-key", client=client) as adapter:
-                    with pytest.raises(LastFmError):
-                        await adapter.artist_statistics("A")
+            )),
+                LastFmAdapter(api_key="test-key", client=client) as adapter
+                with pytest.raises(LastFmError):
+                    await adapter.artist_statistics("A")
 
     run(scenario())
 
