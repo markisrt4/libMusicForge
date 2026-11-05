@@ -22,8 +22,10 @@ def test_artist_metrics_are_attributed() -> None:
         })
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, (
-            LastFmAdapter(api_key="test-key", client=client) as adapter):
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client,
+            LastFmAdapter(api_key="test-key", client=client) as adapter,
+        ):
             stats = await adapter.artist_statistics("Collective Soul")
         assert [(s.metric, s.value, s.unit) for s in stats] == [
             ("global_listener_count", 12345, "listeners"),
@@ -49,8 +51,10 @@ def test_track_metrics() -> None:
         })
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, (
-            LastFmAdapter(api_key="test-key", client=client) as adapter):
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client,
+            LastFmAdapter(api_key="test-key", client=client) as adapter,
+        ):
             stats = await adapter.track_statistics("Collective Soul", "Burn")
         assert stats[0].subject.value == "Collective Soul::Burn"
         assert stats[1].metric == "global_scrobble_count"
