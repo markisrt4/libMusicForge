@@ -143,7 +143,7 @@ class MusicAnalyzer(MusicAnalyzerIf):
         if self._noise_floor is None or self._noise_floor.shape != magnitude.shape:
             return magnitude
         threshold = self._noise_floor * (10.0 ** (self._ZEROIZE_MARGIN_DB / 20.0))
-        return np.maximum(magnitude - threshold, 0.0)
+        return np.asarray(np.maximum(magnitude - threshold, 0.0), dtype=np.float64)
 
     def _gate_spectral_leakage(self, magnitude: np.ndarray) -> np.ndarray:
         """Suppress bins far below the strongest spectral component.
