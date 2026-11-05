@@ -3,8 +3,8 @@
 The metrics are Last.fm scrobbles/listeners, never Spotify stream counts.
 """
 
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
+from typing import Any, Self
 
 import httpx
 
@@ -36,7 +36,7 @@ class LastFmAdapter:
         self._client = client or httpx.AsyncClient(timeout=15.0)
         self._owns_client = client is None
 
-    async def __aenter__(self) -> "LastFmAdapter":
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(self, *_exc: object) -> None:
@@ -106,7 +106,7 @@ def _statistics(
     subject: Identifier,
     metrics: dict[str, str],
 ) -> list[Statistic]:
-    observed_at = datetime.now(timezone.utc)
+    observed_at = datetime.now(UTC)
     results: list[Statistic] = []
     for field, unit in metrics.items():
         raw = data.get(field)
