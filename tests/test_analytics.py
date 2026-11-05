@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -12,7 +12,7 @@ def metric(name: str, value: int, provider: str = "lastfm") -> Statistic:
         provider=provider,
         metric=name,
         value=value,
-        observed_at=datetime.now(timezone.utc),
+        observed_at=datetime.now(UTC),
         unit="listeners" if name == "global_listener_count" else "scrobbles",
         subject=Identifier("lastfm:track", "test"),
     )
