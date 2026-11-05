@@ -1,6 +1,7 @@
 """Minimal orchestration entry point for music provider capabilities."""
 
 from collections.abc import Iterable
+from typing import Self
 
 from musicforge.interfaces import MusicSearchIf
 from musicforge.models import Recording
@@ -12,7 +13,7 @@ class MusicForge:
     def __init__(self, providers: Iterable[object] = ()) -> None:
         self._providers = tuple(providers)
 
-    async def __aenter__(self) -> "MusicForge":
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(self, exc_type: object, exc: object, tb: object) -> None:
