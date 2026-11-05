@@ -68,7 +68,7 @@ def test_404_returns_none_and_500_raises() -> None:
     async def scenario() -> None:
         for status in (404, 500):
             async with httpx.AsyncClient(transport=httpx.MockTransport(
-                lambda request: httpx.Response(status)
+                lambda request, status=status: httpx.Response(status)
             )) as client:
                 adapter = MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0)
                 if status == 404:
