@@ -28,8 +28,10 @@ def test_search_and_normalization() -> None:
         return httpx.Response(200, json={"recordings": [RECORDING]})
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, (
-            MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0) as provider):
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client,
+            MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0) as provider,
+        ):
             results = await MusicForge([provider]).search_track("Collective Soul", "Burn")
         assert len(results) == 1
         assert results[0].artists[0].name == "Collective Soul"
@@ -53,8 +55,10 @@ def test_recording_and_release_lookup() -> None:
         return httpx.Response(200, json=RECORDING)
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, (
-            MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0) as adapter):
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client,
+            MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0) as adapter,
+        ):
             recording = await adapter.get_recording(Identifier("musicbrainz:recording", RID))
             release = await adapter.get_release(Identifier("musicbrainz:release", ALBUM))
             assert recording is not None and recording.title == "Burn"
