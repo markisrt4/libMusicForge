@@ -9,7 +9,6 @@ import pytest
 
 from musicforge.analysis import MusicAnalyzer
 
-
 _SAMPLE_RATE_HZ = 48_000
 _FFT_SIZE = 2048
 
