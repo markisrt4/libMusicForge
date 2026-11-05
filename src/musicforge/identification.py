@@ -56,7 +56,7 @@ async def identify_and_enrich(
         metadata_error = f"{type(exc).__name__}: {exc}"
     try:
         stats = await statistics.track_statistics(artist, title)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - preserve independent provider failures
         statistics_error = f"{type(exc).__name__}: {exc}"
     return EnrichedTrack(
         requested_artist=artist,
