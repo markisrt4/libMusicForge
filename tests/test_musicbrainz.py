@@ -28,8 +28,8 @@ def test_search_and_normalization() -> None:
         return httpx.Response(200, json={"recordings": [RECORDING]})
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)),
-            MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0) as provider
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, (
+            MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0) as provider):
             results = await MusicForge([provider]).search_track("Collective Soul", "Burn")
         assert len(results) == 1
         assert results[0].artists[0].name == "Collective Soul"
@@ -53,8 +53,8 @@ def test_recording_and_release_lookup() -> None:
         return httpx.Response(200, json=RECORDING)
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)),
-            MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0) as adapter
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, (
+            MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0) as adapter):
             recording = await adapter.get_recording(Identifier("musicbrainz:recording", RID))
             release = await adapter.get_release(Identifier("musicbrainz:release", ALBUM))
             assert recording is not None and recording.title == "Burn"
@@ -103,10 +103,10 @@ def test_transient_503_retries_then_succeeds() -> None:
         return httpx.Response(200, json={"recordings": [RECORDING]})
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, (
             MusicBrainzAdapter(
             contact="dev@example.org", client=client, min_interval=0, max_retries=2
-            ) as adapter
+            ) as adapter):
             results = await adapter.search_recordings("Collective Soul", "Burn")
             assert results[0].title == "Burn"
 
@@ -122,10 +122,10 @@ def test_503_exhaustion_raises() -> None:
         return httpx.Response(503)
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, (
             MusicBrainzAdapter(
             contact="dev@example.org", client=client, min_interval=0, max_retries=0
-            ) as adapter
+            ) as adapter):
             with pytest.raises(MusicBrainzError, match="503"):
                 await adapter.search_recordings("Collective Soul", "Burn")
 
@@ -145,10 +145,10 @@ def test_recording_details_include_release_context() -> None:
         })
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, (
             MusicBrainzAdapter(
             contact="dev@example.org", client=client, min_interval=0
-            ) as adapter
+            ) as adapter):
             details = await adapter.get_recording_details(
                 Identifier("musicbrainz:recording", RID)
             )
@@ -166,10 +166,10 @@ def test_recording_details_not_found() -> None:
     async def scenario() -> None:
         async with httpx.AsyncClient(transport=httpx.MockTransport(
             lambda request: httpx.Response(404)
-        )),
+        )) as client, (
             MusicBrainzAdapter(
             contact="dev@example.org", client=client, min_interval=0
-            ) as adapter
+            ) as adapter):
             assert await adapter.get_recording_details(
                 Identifier("musicbrainz:recording", RID)
             ) is None
