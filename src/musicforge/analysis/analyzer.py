@@ -5,11 +5,12 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from itertools import pairwise
 
 import numpy as np
 
-from .types import MusicAnalysisState, PercussionActivity
 from .interfaces import MusicAnalyzerIf
+from .types import MusicAnalysisState, PercussionActivity
 
 
 class MusicAnalyzer(MusicAnalyzerIf):
@@ -142,7 +143,7 @@ class MusicAnalyzer(MusicAnalyzerIf):
         if self._noise_floor is None or self._noise_floor.shape != magnitude.shape:
             return magnitude
         threshold = self._noise_floor * (10.0 ** (self._ZEROIZE_MARGIN_DB / 20.0))
-        return np.maximum(magnitude - threshold, 0.0)
+        return np.asarray(np.maximum(magnitude - threshold, 0.0), dtype=np.float64)
 
     def _gate_spectral_leakage(self, magnitude: np.ndarray) -> np.ndarray:
         """Suppress bins far below the strongest spectral component.
@@ -207,7 +208,7 @@ class MusicAnalyzer(MusicAnalyzerIf):
             return tuple(0.0 for _ in range(self.band_count))
         edges = np.geomspace(31.25, upper_hz, self.band_count + 1)
         output = []
-        for index, (low, high) in enumerate(zip(edges[:-1], edges[1:])):
+        for index, (low, high) in enumerate(pairwise(edges)):
             raw = self._band_rms(magnitude, frequencies, float(low), float(high))
             if raw <= 1e-8:
                 output.append(0.0)

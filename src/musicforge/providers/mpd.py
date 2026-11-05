@@ -32,7 +32,7 @@ class MpdPlaybackSource:
         """
         try:
             return await asyncio.wait_for(self._query(), timeout=self.timeout)
-        except (OSError, asyncio.TimeoutError, UnicodeError) as exc:
+        except (OSError, TimeoutError, UnicodeError) as exc:
             raise MpdError(f"MPD connection failed: {exc}") from exc
 
     async def _query(self) -> TrackIdentity | None:

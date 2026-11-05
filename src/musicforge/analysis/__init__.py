@@ -1,7 +1,7 @@
 """Portable music analysis (requires the optional 'analysis' extra)."""
 
-from .types import MusicAnalysisState, PercussionActivity
-from .interfaces import MusicAnalyzerIf
 from .analyzer import MusicAnalyzer
+from .interfaces import MusicAnalyzerIf
+from .types import MusicAnalysisState, PercussionActivity
 
-__all__ = ["MusicAnalysisState", "PercussionActivity", "MusicAnalyzerIf", "MusicAnalyzer"]
+__all__ = ["MusicAnalysisState", "MusicAnalyzer", "MusicAnalyzerIf", "PercussionActivity"]

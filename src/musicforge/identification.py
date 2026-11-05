@@ -52,11 +52,11 @@ async def identify_and_enrich(
     statistics_error: str | None = None
     try:
         candidates = await metadata.search_recordings(artist, title)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - isolate arbitrary third-party provider failures
         metadata_error = f"{type(exc).__name__}: {exc}"
     try:
         stats = await statistics.track_statistics(artist, title)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - preserve independent provider failures
         statistics_error = f"{type(exc).__name__}: {exc}"
     return EnrichedTrack(
         requested_artist=artist,

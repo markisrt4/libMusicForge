@@ -7,7 +7,7 @@ MusicBrainz recording identity, even when title and duration match.
 from dataclasses import dataclass
 from typing import Protocol
 
-from musicforge.models import Identifier, Recording
+from musicforge.models import Recording
 
 
 @dataclass(frozen=True, slots=True)
