@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -20,7 +20,7 @@ class Statistics:
         return [
             Statistic(
                 provider="lastfm", metric="global_scrobble_count", value=7002,
-                observed_at=datetime.now(timezone.utc), unit="scrobbles",
+                observed_at=datetime.now(UTC), unit="scrobbles",
                 subject=Identifier("lastfm:track", f"{artist}::{title}"),
             )
         ]
