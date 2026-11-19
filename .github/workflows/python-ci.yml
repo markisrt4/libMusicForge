@@ -31,7 +31,7 @@ jobs:
         run: python -m pytest -q --junitxml=test-results.xml
       - name: Upload JUnit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: junit-python-${{ matrix.python-version }}
           path: test-results.xml
@@ -55,7 +55,7 @@ jobs:
         run: python -m build
       - name: Upload distributions
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: libmusicforge-distributions
           path: dist/
