@@ -38,6 +38,21 @@ Build a reusable, provider-agnostic **music metadata, statistics, and discovery 
 - Update README and examples whenever public behavior or setup changes.
 - Never describe a planned feature as implemented.
 
+### Documentation and code quality
+
+- Document every interface when it is introduced. Protocols, abstract base
+  classes, and all of their callable members must have complete Doxygen
+  docstrings in the same change that adds them.
+- Interface docstrings use `"""!` with `@brief`, `@param`, and `@return` tags
+  as applicable. Do not document a return value for a callable annotated to
+  return `None`.
+- New and modified code must not add Ruff lint violations. GitHub Actions is
+  the authoritative lint check. Ruff formatting is available through the
+  optional pre-commit hook, but is not repository-wide CI policy until the
+  existing formatting backlog is handled separately.
+- Keep Ruff pinned. Let scheduled Dependabot pull requests propose tool
+  upgrades so rule changes are isolated, reviewable, and validated by CI.
+
 ## Verification and reporting
 
 - Run the tests, linting, and type checks relevant to changed files when those tools are configured.

@@ -1,0 +1,29 @@
+PROJECT_NAME           = "libMusicForge"
+PROJECT_BRIEF          = "Provider-agnostic music metadata and discovery library"
+OUTPUT_DIRECTORY       = build/doxygen
+
+INPUT                  = src/musicforge
+FILE_PATTERNS          = *.py
+RECURSIVE              = YES
+
+OPTIMIZE_OUTPUT_JAVA   = YES
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HTML_OUTPUT            = html
+HAVE_DOT               = NO
+
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+WARN_IF_INCOMPLETE_DOC = NO
+WARN_NO_PARAMDOC       = NO
+WARN_AS_ERROR          = YES
+
+EXCLUDE_PATTERNS       = */__pycache__/*

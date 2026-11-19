@@ -12,11 +12,31 @@ from musicforge.models import Recording, Statistic
 
 
 class RecordingSearchIf(Protocol):
-    async def search_recordings(self, artist: str, title: str) -> list[Recording]: ...
+    """! @brief Recording search required by cross-provider identification. """
+
+    async def search_recordings(self, artist: str, title: str) -> list[Recording]:
+        """!
+        @brief Search for recording candidates by artist and title.
+        @param self The search provider.
+        @param artist Artist name.
+        @param title Recording title.
+        @return Matching recording candidates.
+        """
+        ...
 
 
 class TrackStatisticsIf(Protocol):
-    async def track_statistics(self, artist: str, title: str) -> list[Statistic]: ...
+    """! @brief Track-statistics lookup required by enrichment. """
+
+    async def track_statistics(self, artist: str, title: str) -> list[Statistic]:
+        """!
+        @brief Retrieve track statistics by artist and title.
+        @param self The statistics provider.
+        @param artist Artist name.
+        @param title Track title.
+        @return Provider-attributed statistics.
+        """
+        ...
 
 
 @dataclass(frozen=True, slots=True)
