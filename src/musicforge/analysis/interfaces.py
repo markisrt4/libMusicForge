@@ -11,7 +11,7 @@ from .types import MusicAnalysisState
 
 
 class MusicAnalyzerIf(ABC):
-    """Analyze PCM samples into a frontend-neutral music state."""
+    """! @brief Analyze PCM samples into a frontend-neutral music state. """
 
     @abstractmethod
     def analyze(
@@ -19,8 +19,9 @@ class MusicAnalyzerIf(ABC):
         samples: Sequence[float],
         sample_rate_hz: int,
     ) -> MusicAnalysisState:
-        """Analyze one block of normalized mono PCM samples.
-
+        """!
+        @brief Analyze one block of normalized mono PCM samples.
+        @param self The analyzer instance.
         @param samples Normalized mono PCM samples.
         @param sample_rate_hz Source sample rate in hertz.
         @return Complete analysis state for the block.
@@ -29,24 +30,34 @@ class MusicAnalyzerIf(ABC):
 
     @abstractmethod
     def start_zeroize(self) -> None:
-        """Begin collecting ambient-noise calibration blocks."""
+        """!
+        @brief Begin collecting ambient-noise calibration blocks.
+        @param self The analyzer instance.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def finish_zeroize(self) -> None:
-        """Commit the collected ambient-noise calibration."""
+        """!
+        @brief Commit the collected ambient-noise calibration.
+        @param self The analyzer instance.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def clear_zeroize(self) -> None:
-        """Discard the current ambient-noise calibration."""
+        """!
+        @brief Discard the current ambient-noise calibration.
+        @param self The analyzer instance.
+        """
         raise NotImplementedError
 
     @property
     @abstractmethod
     def is_zeroized(self) -> bool:
-        """Return whether an ambient-noise calibration is active.
-
+        """!
+        @brief Return whether an ambient-noise calibration is active.
+        @param self The analyzer instance.
         @return True when zeroization has been committed.
         """
         raise NotImplementedError

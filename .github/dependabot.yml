@@ -1,12 +1,26 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
+  - package-ecosystem: pip
     directory: "/"
     schedule:
       interval: weekly
-    open-pull-requests-limit: 3
-  - package-ecosystem: "pip"
+      day: monday
+      time: "06:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    groups:
+      python-quality-tools:
+        patterns:
+          - ruff
+          - mypy
+          - build
+          - pytest
+
+  - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
+      day: monday
+      time: "06:30"
+      timezone: America/New_York
     open-pull-requests-limit: 3

@@ -28,13 +28,28 @@ class TrackIdentity:
 
 
 class PlaybackSourceIf(Protocol):
+    """! @brief Source of portable playback observations. """
+
     async def current_track(self) -> TrackIdentity | None:
-        """Return the observed track, or None when playback is unavailable."""
+        """!
+        @brief Return the observed track when playback is available.
+        @param self The playback source.
+        @return The current track observation when available.
+        """
         ...
 
 
 class RecordingSearchIf(Protocol):
+    """! @brief Recording search required by playback resolution. """
+
     async def search_recordings(self, artist: str, title: str) -> list[Recording]:
+        """!
+        @brief Search for recording candidates by artist and title.
+        @param self The search provider.
+        @param artist Artist name.
+        @param title Recording title.
+        @return Matching recording candidates.
+        """
         ...
 
 
@@ -53,7 +68,15 @@ class ResolutionResult:
 
 
 class RecordingResolverIf(Protocol):
+    """! @brief Conservative resolver for playback observations. """
+
     async def resolve(self, track: TrackIdentity) -> ResolutionResult:
+        """!
+        @brief Resolve an observation into recording candidates.
+        @param self The resolver instance.
+        @param track Observed playback identity.
+        @return Resolution candidates and evidence.
+        """
         ...
 
 

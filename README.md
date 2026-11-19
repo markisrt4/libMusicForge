@@ -74,7 +74,19 @@ python -m pip install -e ".[dev]"
 python -m pytest -q
 ```
 
-The `dev` extra installs only pytest, making it suitable for Termux. On Linux or CI, install the additional linting, type-checking, and build tools with `python -m pip install -e ".[dev,quality]"`. Ruff is not required for normal development or runtime use.
+The `dev` extra installs only pytest, making it suitable for Termux. On Linux
+or CI, install the additional linting, type-checking, and build tools with:
+
+```bash
+python -m pip install -e ".[analysis,dev,quality]"
+python -m ruff check src tests
+python -m mypy
+python -m build
+```
+
+Ruff is not required for normal development or runtime use. Developers who use
+`pre-commit` can enable the optional local Ruff lint and formatting checks with
+`pre-commit install`.
 
 MusicBrainz is the first implemented provider. Use a real contact address in your User-Agent as required by MusicBrainz's API guidance:
 
@@ -98,6 +110,17 @@ Results are a list of candidate recordings, not a guaranteed unique match. The a
 ## Contributing
 
 Contributions and design discussions are welcome. Please read [AGENTS.md](AGENTS.md) for repository conventions and agent-assisted development rules. Open an issue before undertaking major interface or architecture changes.
+
+Every `Protocol` and abstract base class, including all callable members, must
+be documented when introduced using Doxygen `"""!` docstrings with `@brief`,
+`@param`, and `@return` tags as applicable. GitHub Actions validates interface
+documentation and builds the HTML reference. For a local documentation check:
+
+```bash
+python scripts/check_interface_docstrings.py
+mkdir -p build/doxygen
+doxygen Doxyfile
+```
 
 ## Licensing
 

@@ -11,7 +11,17 @@ from musicforge.models import Statistic
 
 
 class TrackStatisticsIf(Protocol):
-    async def track_statistics(self, artist: str, title: str) -> list[Statistic]: ...
+    """! @brief Track-statistics capability used by comparisons. """
+
+    async def track_statistics(self, artist: str, title: str) -> list[Statistic]:
+        """!
+        @brief Retrieve track statistics by artist and title.
+        @param self The statistics provider.
+        @param artist Artist name.
+        @param title Track title.
+        @return Provider-attributed statistics.
+        """
+        ...
 
 
 @dataclass(frozen=True, slots=True)
