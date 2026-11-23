@@ -4,7 +4,7 @@
 
 libMusicForge provides a consistent way to query and reconcile music information across multiple services. It is designed for applications that need artist, recording, release, and community-listening data without coupling themselves to any one provider.
 
-**Status:** Early development. The Python foundation and MusicBrainz adapter are implemented on development branches; provider support and public APIs may change before the first release.
+**Status:** Early development. MusicBrainz, Last.fm, MPD and optional PCM analysis are available; provider support and public APIs may change before the first release.
 
 ## Goals
 
@@ -34,25 +34,13 @@ libMusicForge provides a consistent way to query and reconcile music information
 | Optional HTTP API | REST interface built on the same library services |
 | Cache | Optional persistent caching and request throttling |
 
-Potential providers include **MusicBrainz**, **Last.fm**, **ListenBrainz**, and **Spotify**, subject to their individual API terms, credentials, quotas, and availability. A provider's inclusion here is a roadmap item, not an implementation claim.
+MusicBrainz and Last.fm are implemented. ListenBrainz and Spotify are potential additions, subject to their API terms, credentials, quotas, and availability.
 
-## Architecture (proposed)
+## Architecture
 
-```text
-Applications (ORC, CLI, third-party clients)
-           |                     |
-      Python package        Optional REST API
-           \                     /
-            Core services and models
-                       |
-           Capability-based interfaces
-                       |
-       MusicBrainz / Last.fm / other adapters
-                       |
-              Optional cache/storage
-```
-
-The library remains usable without the HTTP server. Providers implement only the capabilities they support. Normalized results preserve provider IDs, attribution, metric units, and retrieval timestamps where applicable.
+See the [architecture guide](docs/architecture.md) for the current provider,
+playback and PCM analysis paths. The [examples index](examples/README.md) and
+[component test guide](component_test/README.md) cover runnable workflows.
 
 ## Development roadmap
 
@@ -97,7 +85,7 @@ Results are a list of candidate recordings, not a guaranteed unique match. The a
 
 ## Contributing
 
-Contributions and design discussions are welcome. Please read [AGENTS.md](AGENTS.md) for repository conventions and agent-assisted development rules. Open an issue before undertaking major interface or architecture changes.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing and pull requests.
 
 ## Licensing
 
@@ -106,13 +94,12 @@ Licensed under the [Apache License 2.0](LICENSE).
 libMusicForge is an independent open-source project. Third-party music metadata and analytics remain subject to their respective providers' terms and licenses.
 
 
-## Last.fm statistics (development branch)
+## Last.fm statistics
 
 Last.fm provides **Last.fm listener counts and scrobbles**, not Spotify streams. A free Last.fm API key is required for the statistics adapter.
 
 ```bash
 export LASTFM_API_KEY="your-api-key"
-python examples/lastfm_statistics.py
 ```
 
 Or use the Python API:
@@ -165,8 +152,8 @@ The `identify_track.py` example also fetches MusicBrainz recording details indiv
 `musicforge.playback.TrackIdentity` holds an observation from any player or
 provider: source, artist, title, optional album, duration, ISRC and source ID.
 `PlaybackSourceIf` defines an async `current_track()` contract; Android
-MediaSession, Linux MPRIS, MPD and provider-specific adapters are **not yet
-implemented**. Core imports require none of their platform dependencies.
+MediaSession, Linux MPRIS and provider-specific adapters are planned. MPD is
+available through the adapter below. Core imports need no player dependencies.
 
 `MusicBrainzNameResolver` uses MusicBrainz artist/title search to return
 candidate recordings with explicit evidence (exact title, artist credit,
