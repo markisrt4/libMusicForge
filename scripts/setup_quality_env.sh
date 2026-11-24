@@ -50,3 +50,12 @@ PY
 fi
 "$env_dir/bin/python" -m pip --isolated install --upgrade -c "$constraints" -e ".[$extras]"
 "$env_dir/bin/python" -m pip check
+
+# Keep unsupported platforms usable for Python-only quality checks.
+if [ "${QUALITY_SKIP_DOXYGEN:-0}" != 1 ]; then
+    if [ "$(uname -s)" = Linux ] && [ "$(uname -m)" = x86_64 ] && [ -z "${TERMUX_VERSION:-}" ] && [[ "${PREFIX:-}" != */com.termux/files/usr ]]; then
+        bash scripts/install_quality_doxygen.sh
+    else
+        echo "Skipping automatic Doxygen provisioning on this platform; use CI for documentation checks."
+    fi
+fi

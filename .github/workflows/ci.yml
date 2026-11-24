@@ -26,3 +26,6 @@ jobs:
         run: bash scripts/dev_check.sh --types
       - name: Build distributions
         run: bash scripts/dev_check.sh --build
+      - name: Documentation
+        if: matrix.python-version == '3.13'
+        run: bash scripts/dev_check.sh --docs
