@@ -34,7 +34,7 @@ class MusicForge:
         @param exc Exception instance, if any.
         @param tb Exception traceback, if any.
         """
-        return None
+        return
 
     async def search_track(self, artist: str, title: str) -> list[Recording]:
         """! @brief Search configured search-capable providers, in order.
