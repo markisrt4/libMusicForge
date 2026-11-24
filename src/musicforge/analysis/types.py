@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Mark G. Russell
 # SPDX-License-Identifier: MIT
 
-"""Shared data types produced by music analysis backends."""
+"""! @brief Shared data types produced by music analysis backends."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class PercussionActivity:
-    """Normalized percussion activity estimates in the range 0.0 through 1.0."""
+    """! @brief Normalized percussion activity estimates in the range 0.0 through 1.0."""
 
     kick: float = 0.0
     bass: float = 0.0
@@ -23,7 +23,7 @@ class PercussionActivity:
 
 @dataclass(frozen=True)
 class MusicAnalysisState:
-    """Frontend-neutral snapshot of analyzed audio."""
+    """! @brief Frontend-neutral snapshot of analyzed audio."""
 
     level: float = 0.0
     bass: float = 0.0

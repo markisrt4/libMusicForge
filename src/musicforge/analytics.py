@@ -1,4 +1,4 @@
-"""Provider-attributed track comparisons.
+"""! @brief Provider-attributed track comparisons.
 
 Ratios describe Last.fm recorded listening, not global streaming popularity.
 """
@@ -11,11 +11,23 @@ from musicforge.models import Statistic
 
 
 class TrackStatisticsIf(Protocol):
-    async def track_statistics(self, artist: str, title: str) -> list[Statistic]: ...
+    """! @brief Contract for track statistics lookup."""
+
+    async def track_statistics(self, artist: str, title: str) -> list[Statistic]:
+        """! @brief Retrieve provider-attributed track statistics.
+
+        @param self Current instance.
+        @param artist Artist name.
+        @param title Track title.
+        @return Available provider-attributed track metrics.
+        """
+        ...
 
 
 @dataclass(frozen=True, slots=True)
 class TrackComparison:
+    """! @brief Track listener and scrobble counts and derived ratio."""
+
     artist: str
     title: str
     listeners: int | None
@@ -24,6 +36,11 @@ class TrackComparison:
 
     @property
     def scrobbles_per_listener(self) -> float | None:
+        """! @brief Compute the ratio of scrobbles to listeners.
+
+        @param self Current instance.
+        @return Ratio, or None if counts are missing or listeners are zero.
+        """
         if self.listeners is None or self.scrobbles is None or self.listeners == 0:
             return None
         return self.scrobbles / self.listeners
@@ -48,7 +65,13 @@ async def compare_tracks(
     sort_by: str = "listeners",
     descending: bool = True,
 ) -> list[TrackComparison]:
-    """Compare track totals from Last.fm.
+    """! @brief Compare track totals from Last.fm.
+
+    @param provider Track statistics provider.
+    @param tracks Sequence of artist/title pairs.
+    @param sort_by Sort metric: listeners, scrobbles or ratio.
+    @param descending Whether to sort known values in descending order.
+    @return Sorted comparisons with missing values last.
 
     Uses sequential requests to avoid unnecessary API bursts. Missing values
     are kept as None, not silently converted to zero.

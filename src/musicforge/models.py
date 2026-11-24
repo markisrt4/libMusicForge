@@ -1,4 +1,4 @@
-"""Immutable, provider-independent music domain models."""
+"""! @brief Immutable, provider-independent music domain models."""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -6,7 +6,7 @@ from datetime import datetime
 
 @dataclass(frozen=True, slots=True)
 class Identifier:
-    """Identifier in a provider's namespace (e.g. musicbrainz/recording)."""
+    """! @brief Identifier in a provider's namespace (e.g. musicbrainz/recording)."""
 
     namespace: str
     value: str
@@ -14,13 +14,15 @@ class Identifier:
 
 @dataclass(frozen=True, slots=True)
 class Artist:
+    """! @brief Artist name and provider identifiers."""
+
     name: str
     identifiers: tuple[Identifier, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
 class Recording:
-    """A recorded performance, not necessarily a particular release track."""
+    """! @brief A recorded performance, not necessarily a particular release track."""
 
     title: str
     artists: tuple[Artist, ...] = ()
@@ -30,7 +32,7 @@ class Recording:
 
 @dataclass(frozen=True, slots=True)
 class Release:
-    """A particular album/single release, distinct from its recordings."""
+    """! @brief A particular album/single release, distinct from its recordings."""
 
     title: str
     artists: tuple[Artist, ...] = ()
@@ -40,7 +42,7 @@ class Release:
 
 @dataclass(frozen=True, slots=True)
 class Statistic:
-    """Source-specific observation; values are never assumed comparable."""
+    """! @brief Source-specific observation; values are never assumed comparable."""
 
     provider: str
     metric: str

@@ -1,4 +1,4 @@
-"""Portable music analysis (requires the optional 'analysis' extra)."""
+"""! @brief Portable music analysis (requires the optional 'analysis' extra)."""
 
 from .analyzer import MusicAnalyzer
 from .interfaces import MusicAnalyzerIf

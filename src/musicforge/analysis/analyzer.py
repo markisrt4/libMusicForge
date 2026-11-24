@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Mark G. Russell
 # SPDX-License-Identifier: MIT
 
-"""Shared FFT-based music analysis implementation."""
+"""! @brief Shared FFT-based music analysis implementation."""
 
 from __future__ import annotations
 
@@ -15,13 +15,19 @@ from .types import MusicAnalysisState, PercussionActivity
 
 
 class MusicAnalyzer(MusicAnalyzerIf):
-    """Analyze normalized mono PCM using a Hann-windowed real FFT."""
+    """! @brief Analyze normalized mono PCM using a Hann-windowed real FFT."""
 
     _ZEROIZE_PERCENTILE = 75.0
     _ZEROIZE_MARGIN_DB = 3.0
     _SPECTRAL_RELATIVE_FLOOR_DB = -42.0
 
     def __init__(self, *, fft_size: int = 2048, band_count: int = 24) -> None:
+        """! @brief Initialize the configured instance.
+
+        @param self Current instance.
+        @param fft_size FFT length, a power of two of at least 256.
+        @param band_count Number of spectrum bands, at least three.
+        """
         if fft_size < 256 or fft_size & (fft_size - 1):
             raise ValueError("fft_size must be a power of two >= 256")
         if band_count < 3:
@@ -52,13 +58,26 @@ class MusicAnalyzer(MusicAnalyzerIf):
 
     @property
     def is_zeroized(self) -> bool:
+        """! @brief Report whether ambient calibration is active.
+
+        @param self Current instance.
+        @return True if calibration is active.
+        """
         return self._noise_floor is not None
 
     def start_zeroize(self) -> None:
+        """! @brief Begin collecting ambient noise frames.
+
+        @param self Current instance.
+        """
         self._zeroize_frames.clear()
         self._zeroize_collecting = True
 
     def finish_zeroize(self) -> None:
+        """! @brief Commit collected ambient noise calibration; requires at least one frame.
+
+        @param self Current instance.
+        """
         if not self._zeroize_frames:
             self._zeroize_collecting = False
             raise RuntimeError("zeroize requires at least one analyzed audio block")
@@ -73,6 +92,10 @@ class MusicAnalyzer(MusicAnalyzerIf):
         self._reset_adaptive_state()
 
     def clear_zeroize(self) -> None:
+        """! @brief Discard calibration and reset adaptive state.
+
+        @param self Current instance.
+        """
         self._zeroize_frames.clear()
         self._zeroize_collecting = False
         self._noise_floor = None
@@ -83,6 +106,13 @@ class MusicAnalyzer(MusicAnalyzerIf):
         samples: Sequence[float],
         sample_rate_hz: int,
     ) -> MusicAnalysisState:
+        """! @brief Analyze normalized mono PCM into spectrum and activity estimates.
+
+        @param self Current instance.
+        @param samples Normalized mono PCM samples.
+        @param sample_rate_hz Sample rate in hertz.
+        @return Complete analysis snapshot.
+        """
         if sample_rate_hz <= 0:
             raise ValueError("sample_rate_hz must be positive")
         pcm = np.asarray(samples, dtype=np.float32).reshape(-1)

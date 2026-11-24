@@ -1,4 +1,4 @@
-"""Dependency-free asynchronous MPD playback observer.
+"""! @brief Dependency-free asynchronous MPD playback observer.
 
 Reads MPD's line protocol over TCP. This adapter never controls playback.
 """
@@ -10,10 +10,12 @@ from musicforge.playback import TrackIdentity
 
 
 class MpdError(RuntimeError):
-    """MPD protocol, connection or authentication failure."""
+    """! @brief MPD protocol, connection or authentication failure."""
 
 
 class MpdPlaybackSource:
+    """! @brief Read-only asynchronous MPD playback observer."""
+
     def __init__(
         self,
         host: str = "127.0.0.1",
@@ -21,6 +23,14 @@ class MpdPlaybackSource:
         password: str | None = None,
         timeout: float = 5.0,
     ) -> None:
+        """! @brief Initialize the configured instance.
+
+        @param self Current instance.
+        @param host MPD server address.
+        @param port MPD TCP port.
+        @param password Optional MPD password.
+        @param timeout Query timeout in seconds.
+        """
         if not 1 <= port <= 65535:
             raise ValueError("port must be between 1 and 65535")
         if timeout <= 0:
@@ -33,7 +43,10 @@ class MpdPlaybackSource:
         )
 
     async def current_track(self) -> TrackIdentity | None:
-        """Return the playing or paused track; None when stopped or unavailable.
+        """! @brief Return the playing or paused track; None when stopped or unavailable.
+
+        @param self Current instance.
+        @return Observed track, or None if unavailable.
 
         Connection/protocol failures raise MpdError rather than being mistaken
         for a stopped player.

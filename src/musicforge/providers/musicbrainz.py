@@ -1,4 +1,4 @@
-"""Async MusicBrainz search and lookup adapter.
+"""! @brief Async MusicBrainz search and lookup adapter.
 
 Uses the public MusicBrainz JSON API. Supply a descriptive contact email in
 the User-Agent and respect MusicBrainz's published rate-limit requirements.
@@ -20,11 +20,13 @@ _RETRYABLE = {429, 502, 503, 504}
 
 
 class MusicBrainzError(RuntimeError):
-    """MusicBrainz request or response could not be processed."""
+    """! @brief MusicBrainz request or response could not be processed."""
 
 
 @dataclass(frozen=True, slots=True)
 class ReleaseSummary:
+    """! @brief Release title, optional date and identifier."""
+
     title: str
     date: str | None
     identifier: Identifier
@@ -32,12 +34,14 @@ class ReleaseSummary:
 
 @dataclass(frozen=True, slots=True)
 class RecordingDetails:
+    """! @brief Recording metadata and associated release summaries."""
+
     recording: Recording
     releases: tuple[ReleaseSummary, ...] = ()
 
 
 class MusicBrainzAdapter:
-    """MusicBrainz metadata provider with serialized, throttled requests.
+    """! @brief MusicBrainz metadata provider with serialized, throttled requests.
 
     Instances own their HTTP client unless one is supplied for testing.
     Use as an async context manager or call aclose() when finished.
@@ -53,6 +57,16 @@ class MusicBrainzAdapter:
         min_interval: float = 1.1,
         max_retries: int = 2,
     ) -> None:
+        """! @brief Initialize the configured instance.
+
+        @param self Current instance.
+        @param contact Contact address for the User-Agent.
+        @param app_name Application name for the User-Agent.
+        @param app_version Application version for the User-Agent.
+        @param client Optional externally owned HTTP client.
+        @param min_interval Minimum request spacing in seconds.
+        @param max_retries Maximum retries after initial request.
+        """
         if not contact.strip():
             raise ValueError("MusicBrainz requires a nonempty contact address")
         if max_retries < 0:
@@ -68,12 +82,26 @@ class MusicBrainzAdapter:
         self._last_request: float | None = None
 
     async def __aenter__(self) -> Self:
+        """! @brief Enter the asynchronous context.
+
+        @param self Current instance.
+        @return Current instance.
+        """
         return self
 
     async def __aexit__(self, *_exc: object) -> None:
+        """! @brief Exit the asynchronous context.
+
+        @param self Current instance.
+        @param _exc Context exit exception information.
+        """
         await self.aclose()
 
     async def aclose(self) -> None:
+        """! @brief Close the HTTP client if owned by this adapter.
+
+        @param self Current instance.
+        """
         if self._owns_client:
             await self._client.aclose()
 
@@ -134,7 +162,13 @@ class MusicBrainzAdapter:
             raise AssertionError("unreachable retry state")
 
     async def search_recordings(self, artist: str, title: str) -> list[Recording]:
-        """Search recordings; results may represent multiple performances."""
+        """! @brief Search recordings; results may represent multiple performances.
+
+        @param self Current instance.
+        @param artist Artist name.
+        @param title Track title.
+        @return Matching recording candidates.
+        """
         if not artist.strip() or not title.strip():
             raise ValueError("artist and title are required")
         query = f'recording:"{_escape(title)}" AND artist:"{_escape(artist)}"'
@@ -148,7 +182,12 @@ class MusicBrainzAdapter:
     async def get_recording_details(
         self, identifier: Identifier
     ) -> "RecordingDetails | None":
-        """Fetch release context for a specific MusicBrainz recording."""
+        """! @brief Fetch release context for a specific MusicBrainz recording.
+
+        @param self Current instance.
+        @param identifier Provider-scoped entity identifier.
+        @return Recording and release context, or None if not found.
+        """
         _validate(identifier, "recording")
         try:
             data = await self._get(
@@ -170,6 +209,12 @@ class MusicBrainzAdapter:
         return RecordingDetails(recording=_recording(data), releases=releases)
 
     async def get_recording(self, identifier: Identifier) -> Recording | None:
+        """! @brief Retrieve recording metadata by identifier.
+
+        @param self Current instance.
+        @param identifier Provider-scoped entity identifier.
+        @return Recording, or None if not found.
+        """
         _validate(identifier, "recording")
         try:
             data = await self._get(
@@ -182,6 +227,12 @@ class MusicBrainzAdapter:
         return _recording(data)
 
     async def get_release(self, identifier: Identifier) -> Release | None:
+        """! @brief Retrieve release metadata by identifier.
+
+        @param self Current instance.
+        @param identifier Provider-scoped entity identifier.
+        @return Release, or None if not found.
+        """
         _validate(identifier, "release")
         try:
             data = await self._get(
