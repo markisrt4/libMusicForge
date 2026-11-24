@@ -32,6 +32,7 @@ run_checks() {
     echo "=== Python environment ==="
     command -v python
     python -c 'from pathlib import Path; import musicforge; p = Path(musicforge.__file__).resolve(); print(p); assert p.is_relative_to(Path("src").resolve()), "Not importing checkout"' || return 1
+    local pytest_args=("$@")
     if [ "$#" -eq 0 ]; then set -- src tests; fi
     if [ "$mode" = --all ] || [ "$mode" = --lint ]; then
         ruff check "$@" || rc=1
@@ -45,7 +46,7 @@ run_checks() {
         python -m mypy "${mypy_args[@]}" || rc=1
     fi
     if [ "$mode" = --test ]; then
-        python -m pytest -q || rc=1
+        python -m pytest -q "${pytest_args[@]}" || rc=1
     fi
     if [ "$mode" = --docstrings ] || [ "$mode" = --docs ] || [ "$mode" = --all ]; then
         python scripts/check_docstrings.py || rc=1

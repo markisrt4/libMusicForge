@@ -23,8 +23,9 @@ bash scripts/setup_quality_env.sh
 bash scripts/dev_check.sh --all
 ```
 
-The isolated quality environment uses pinned constraints. Use `--test` for pytest, `--format` to apply Ruff fixes, and `--build` for packaging. `--all` runs static checks only. The pull-request workflows run pytest on Python 3.11–3.13, along with lint,
-type and packaging checks. The manually dispatched full gate also checks Ruff, mypy and packaging.
+The isolated quality environment uses pinned constraints. Use `--test` for pytest, `--format` to apply Ruff fixes, and `--build` for packaging. `--all` runs static checks only. A single Python CI workflow runs all quality gates on pull requests, main
+pushes and manual dispatch. Tests run on Python 3.11–3.13; static checks,
+packaging and Doxygen run once on Python 3.13. Obsolete runs are cancelled.
 
 ## A quick architecture tour
 
