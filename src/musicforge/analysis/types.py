@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 """Shared data types produced by music analysis backends."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

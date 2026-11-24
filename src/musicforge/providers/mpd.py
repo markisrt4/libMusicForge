@@ -15,14 +15,22 @@ class MpdError(RuntimeError):
 
 class MpdPlaybackSource:
     def __init__(
-        self, host: str = "127.0.0.1", port: int = 6600,
-        password: str | None = None, timeout: float = 5.0,
+        self,
+        host: str = "127.0.0.1",
+        port: int = 6600,
+        password: str | None = None,
+        timeout: float = 5.0,
     ) -> None:
         if not 1 <= port <= 65535:
             raise ValueError("port must be between 1 and 65535")
         if timeout <= 0:
             raise ValueError("timeout must be positive")
-        self.host, self.port, self.password, self.timeout = host, port, password, timeout
+        self.host, self.port, self.password, self.timeout = (
+            host,
+            port,
+            password,
+            timeout,
+        )
 
     async def current_track(self) -> TrackIdentity | None:
         """Return the playing or paused track; None when stopped or unavailable.
@@ -61,8 +69,11 @@ class MpdPlaybackSource:
                 except ValueError:
                     pass
             return TrackIdentity(
-                source="mpd", title=title, artist=artist,
-                album=_first(song, "Album"), duration_ms=duration_ms,
+                source="mpd",
+                title=title,
+                artist=artist,
+                album=_first(song, "Album"),
+                duration_ms=duration_ms,
                 source_track_id=_first(song, "file"),
             )
         finally:
@@ -71,8 +82,11 @@ class MpdPlaybackSource:
                 await writer.wait_closed()
 
     async def _command(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
-        command: str, argument: str | None = None,
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+        command: str,
+        argument: str | None = None,
     ) -> dict[str, list[str]]:
         line = command
         if argument is not None:

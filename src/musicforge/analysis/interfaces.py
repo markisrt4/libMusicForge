@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 """Frontend-neutral music analyzer interface."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

@@ -34,8 +34,7 @@ class PlaybackSourceIf(Protocol):
 
 
 class RecordingSearchIf(Protocol):
-    async def search_recordings(self, artist: str, title: str) -> list[Recording]:
-        ...
+    async def search_recordings(self, artist: str, title: str) -> list[Recording]: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,8 +52,7 @@ class ResolutionResult:
 
 
 class RecordingResolverIf(Protocol):
-    async def resolve(self, track: TrackIdentity) -> ResolutionResult:
-        ...
+    async def resolve(self, track: TrackIdentity) -> ResolutionResult: ...
 
 
 class MusicBrainzNameResolver:
@@ -73,7 +71,9 @@ class MusicBrainzNameResolver:
             evidence: list[str] = []
             if recording.title.casefold() == track.title.casefold():
                 evidence.append("exact_title")
-            if any(a.name.casefold() == track.artist.casefold() for a in recording.artists):
+            if any(
+                a.name.casefold() == track.artist.casefold() for a in recording.artists
+            ):
                 evidence.append("exact_artist_credit")
             delta = None
             if track.duration_ms is not None and recording.duration_ms is not None:

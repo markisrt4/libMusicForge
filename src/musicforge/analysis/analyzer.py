@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 """Shared FFT-based music analysis implementation."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -120,7 +121,9 @@ class MusicAnalyzer(MusicAnalyzerIf):
             percussion=self._percussion(gated_magnitude, frequencies),
             sample_rate_hz=sample_rate_hz,
             fft_size=self.fft_size,
-            spectrum_dbfs=tuple(float(v) for v in 20 * np.log10(np.maximum(magnitude, 1e-6))),
+            spectrum_dbfs=tuple(
+                float(v) for v in 20 * np.log10(np.maximum(magnitude, 1e-6))
+            ),
             spectrum_hz=tuple(float(v) for v in frequencies),
         )
 
@@ -128,15 +131,25 @@ class MusicAnalyzer(MusicAnalyzerIf):
         """Estimate onsets via positive spectral flux, not tempo or instrument identity."""
         previous = self._previous_magnitude
         self._previous_magnitude = magnitude.copy()
-        flux = 0.0 if previous is None else float(np.sum(np.maximum(magnitude - previous, 0.0)))
+        flux = (
+            0.0
+            if previous is None
+            else float(np.sum(np.maximum(magnitude - previous, 0.0)))
+        )
         energy = float(np.sum(magnitude))
         relative = flux / max(energy, 1e-6)
         self._beat_age += duration_s
         self._beat_envelope *= float(np.exp(-duration_s / 0.14))
-        if energy > 1e-4 and relative > max(0.12, self._flux_average * 1.6) and self._beat_age >= 0.12:
+        if (
+            energy > 1e-4
+            and relative > max(0.12, self._flux_average * 1.6)
+            and self._beat_age >= 0.12
+        ):
             self._beat_envelope = min(1.0, relative * 2.0)
             self._beat_age = 0.0
-        self._flux_average += (relative - self._flux_average) * (1.0 - float(np.exp(-duration_s / 0.5)))
+        self._flux_average += (relative - self._flux_average) * (
+            1.0 - float(np.exp(-duration_s / 0.5))
+        )
         return self._beat_envelope
 
     def _gate_ambient(self, magnitude: np.ndarray) -> np.ndarray:
@@ -229,8 +242,7 @@ class MusicAnalyzer(MusicAnalyzerIf):
         self._previous_activity[name] = normalized
         return min(
             1.0,
-            normalized * (1.0 - transient_weight)
-            + rise * 2.6 * transient_weight,
+            normalized * (1.0 - transient_weight) + rise * 2.6 * transient_weight,
         )
 
     def _percussion(

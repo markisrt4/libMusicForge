@@ -15,11 +15,15 @@ def test_artist_metrics_are_attributed() -> None:
 
     def handler(request: httpx.Request) -> httpx.Response:
         seen.append(request)
-        return httpx.Response(200, json={
-            "artist": {"name": "Collective Soul", "stats": {
-                "listeners": "12345", "playcount": "67890"
-            }}
-        })
+        return httpx.Response(
+            200,
+            json={
+                "artist": {
+                    "name": "Collective Soul",
+                    "stats": {"listeners": "12345", "playcount": "67890"},
+                }
+            },
+        )
 
     async def scenario() -> None:
         async with (
@@ -41,14 +45,17 @@ def test_artist_metrics_are_attributed() -> None:
 
 def test_track_metrics() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json={
-            "track": {
-                "name": "Burn",
-                "artist": {"name": "Collective Soul"},
-                "listeners": "100",
-                "playcount": "250",
-            }
-        })
+        return httpx.Response(
+            200,
+            json={
+                "track": {
+                    "name": "Burn",
+                    "artist": {"name": "Collective Soul"},
+                    "listeners": "100",
+                    "playcount": "250",
+                }
+            },
+        )
 
     async def scenario() -> None:
         async with (
@@ -69,10 +76,16 @@ def test_api_error_and_malformed_counts() -> None:
             {"error": 10, "message": "Invalid API key"},
             {"artist": {"name": "A", "stats": {"listeners": "not-a-number"}}},
         ):
-            async with httpx.AsyncClient(transport=httpx.MockTransport(
-                lambda request, payload=payload: httpx.Response(200, json=payload)
-            )) as client, \
-                LastFmAdapter(api_key="test-key", client=client) as adapter:
+            async with (
+                httpx.AsyncClient(
+                    transport=httpx.MockTransport(
+                        lambda request, payload=payload: httpx.Response(
+                            200, json=payload
+                        )
+                    )
+                ) as client,
+                LastFmAdapter(api_key="test-key", client=client) as adapter,
+            ):
                 with pytest.raises(LastFmError):
                     await adapter.artist_statistics("A")
 

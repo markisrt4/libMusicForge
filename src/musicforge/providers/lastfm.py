@@ -82,7 +82,9 @@ class LastFmAdapter:
         if not isinstance(stats, dict):
             raise LastFmError("Last.fm artist response missing stats")
         subject = Identifier("lastfm:artist", str(data.get("name") or artist))
-        return _statistics(stats, subject, {"listeners": "listeners", "playcount": "scrobbles"})
+        return _statistics(
+            stats, subject, {"listeners": "listeners", "playcount": "scrobbles"}
+        )
 
     async def track_statistics(self, artist: str, title: str) -> list[Statistic]:
         """Get global Last.fm listener and scrobble totals for a track."""
@@ -93,12 +95,16 @@ class LastFmAdapter:
         if not isinstance(data, dict):
             raise LastFmError("Last.fm track response missing track")
         actual_artist = data.get("artist")
-        artist_name = actual_artist.get("name") if isinstance(actual_artist, dict) else artist
+        artist_name = (
+            actual_artist.get("name") if isinstance(actual_artist, dict) else artist
+        )
         subject = Identifier(
             "lastfm:track",
             f"{artist_name}::{data.get('name') or title}",
         )
-        return _statistics(data, subject, {"listeners": "listeners", "playcount": "scrobbles"})
+        return _statistics(
+            data, subject, {"listeners": "listeners", "playcount": "scrobbles"}
+        )
 
 
 def _statistics(
@@ -121,7 +127,9 @@ def _statistics(
         results.append(
             Statistic(
                 provider="lastfm",
-                metric="global_listener_count" if field == "listeners" else "global_scrobble_count",
+                metric="global_listener_count"
+                if field == "listeners"
+                else "global_scrobble_count",
                 value=count,
                 observed_at=observed_at,
                 unit=unit,

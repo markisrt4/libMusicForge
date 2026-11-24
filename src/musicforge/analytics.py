@@ -71,9 +71,13 @@ async def compare_tracks(
 
     def key(item: TrackComparison) -> tuple[bool, float]:
         value = (
-            item.scrobbles_per_listener if sort_by == "ratio"
+            item.scrobbles_per_listener
+            if sort_by == "ratio"
             else getattr(item, sort_by)
         )
-        return (value is None, -(float(value)) if descending and value is not None else float(value or 0))
+        return (
+            value is None,
+            -(float(value)) if descending and value is not None else float(value or 0),
+        )
 
     return sorted(results, key=key)

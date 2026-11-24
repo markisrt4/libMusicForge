@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 """Unit tests for the FFT-based music analyzer."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -115,6 +116,7 @@ def test_low_sample_rate_returns_empty_spectrum_safely() -> None:
     state = analyzer.analyze(np.zeros(_FFT_SIZE, dtype=np.float32), 60)
 
     assert state.spectrum == tuple(0.0 for _ in range(24))
+
 
 def test_raw_fft_bins_match_fft_size_and_nyquist() -> None:
     analyzer = MusicAnalyzer(fft_size=_FFT_SIZE)

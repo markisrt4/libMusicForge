@@ -99,7 +99,7 @@ class MusicBrainzAdapter:
                         exc.response.status_code in _RETRYABLE
                         and attempt < self._max_retries
                     ):
-                        delay = min(2.0 * (2 ** attempt), 15.0)
+                        delay = min(2.0 * (2**attempt), 15.0)
                         retry_after = exc.response.headers.get("Retry-After")
                         if retry_after:
                             try:
@@ -119,10 +119,15 @@ class MusicBrainzAdapter:
                         f"MusicBrainz HTTP {exc.response.status_code}"
                     ) from exc
                 except (httpx.TransportError, ValueError) as exc:
-                    if isinstance(exc, httpx.TransportError) and attempt < self._max_retries:
-                        await asyncio.sleep(min(2.0 * (2 ** attempt), 15.0))
+                    if (
+                        isinstance(exc, httpx.TransportError)
+                        and attempt < self._max_retries
+                    ):
+                        await asyncio.sleep(min(2.0 * (2**attempt), 15.0))
                         continue
-                    raise MusicBrainzError(f"MusicBrainz request failed: {exc}") from exc
+                    raise MusicBrainzError(
+                        f"MusicBrainz request failed: {exc}"
+                    ) from exc
                 if not isinstance(payload, dict):
                     raise MusicBrainzError("MusicBrainz returned a non-object response")
                 return payload
@@ -134,10 +139,15 @@ class MusicBrainzAdapter:
             raise ValueError("artist and title are required")
         query = f'recording:"{_escape(title)}" AND artist:"{_escape(artist)}"'
         data = await self._get("recording", {"query": query, "limit": "25"})
-        return [_recording(item) for item in data.get("recordings", [])
-                if isinstance(item, dict) and item.get("title")]
+        return [
+            _recording(item)
+            for item in data.get("recordings", [])
+            if isinstance(item, dict) and item.get("title")
+        ]
 
-    async def get_recording_details(self, identifier: Identifier) -> "RecordingDetails | None":
+    async def get_recording_details(
+        self, identifier: Identifier
+    ) -> "RecordingDetails | None":
         """Fetch release context for a specific MusicBrainz recording."""
         _validate(identifier, "recording")
         try:
@@ -198,7 +208,10 @@ class MusicBrainzAdapter:
 
 
 def _is_not_found(exc: MusicBrainzError) -> bool:
-    return isinstance(exc.__cause__, httpx.HTTPStatusError) and exc.__cause__.response.status_code == 404
+    return (
+        isinstance(exc.__cause__, httpx.HTTPStatusError)
+        and exc.__cause__.response.status_code == 404
+    )
 
 
 def _validate(identifier: Identifier, kind: str) -> None:
@@ -225,11 +238,14 @@ def _artists(credits: object) -> tuple[Artist, ...]:
         artist = credit.get("artist")
         if isinstance(artist, dict):
             identifier = artist.get("id")
-            result.append(Artist(
-                name=str(artist.get("name", "")),
-                identifiers=(Identifier("musicbrainz:artist", str(identifier)),)
-                if identifier else (),
-            ))
+            result.append(
+                Artist(
+                    name=str(artist.get("name", "")),
+                    identifiers=(Identifier("musicbrainz:artist", str(identifier)),)
+                    if identifier
+                    else (),
+                )
+            )
     return tuple(result)
 
 
@@ -240,6 +256,9 @@ def _recording(data: dict[str, Any]) -> Recording:
         title=str(data.get("title", "")),
         artists=_artists(data.get("artist-credit", [])),
         identifiers=(Identifier("musicbrainz:recording", str(identifier)),)
-        if identifier else (),
-        duration_ms=duration if isinstance(duration, int) and not isinstance(duration, bool) else None,
+        if identifier
+        else (),
+        duration_ms=duration
+        if isinstance(duration, int) and not isinstance(duration, bool)
+        else None,
     )
