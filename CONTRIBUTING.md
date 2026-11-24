@@ -59,3 +59,8 @@ Work on a feature branch. Explain what changed, how to reproduce it,
 which checks passed and which ones need hardware or a live service.
 Remove private data and credentials from logs, preserve existing license
 notices, and follow [AGENTS.md](AGENTS.md) for repository-specific checks.
+
+On Termux, install `python-numpy` with `pkg` before quality setup. The setup
+script links the native NumPy package and metadata into the isolated environment
+and constrains pip to that installed version. Ubuntu CI retains its pinned NumPy
+versions. Other system packages remain isolated.

@@ -12,5 +12,33 @@ if ! grep -Eiq '^include-system-site-packages *= *false$' "$env_dir/pyvenv.cfg";
     echo "Quality environment must not inherit system packages." >&2
     exit 1
 fi
-"$env_dir/bin/python" -m pip --isolated install --upgrade -c requirements/quality-constraints.txt -e '.[analysis,dev,quality]'
+constraints="$PWD/requirements/quality-constraints.txt"
+if [ -n "${TERMUX_VERSION:-}" ] || [[ "${PREFIX:-}" == */com.termux/files/usr ]]; then
+    # Expose only the native NumPy package and its distribution metadata.
+    "$env_dir/bin/python" - "$PREFIX/bin/python" <<'PY'
+import pathlib
+import subprocess
+import sys
+import sysconfig
+
+native = pathlib.Path(subprocess.check_output(
+    [sys.argv[1], "-c", "import numpy; print(numpy.__file__)"], text=True
+).strip()).parent
+site = pathlib.Path(sysconfig.get_path("purelib"))
+for source in [native, *native.parent.glob("numpy-*.dist-info"), *native.parent.glob("numpy.libs")]:
+    target = site / source.name
+    if target.is_symlink():
+        target.unlink()
+    if target.exists():
+        raise SystemExit(f"Existing NumPy installation at {target}; recreate .venv-quality")
+    target.symlink_to(source, target_is_directory=True)
+PY
+    native_version="$("$env_dir/bin/python" -c 'import numpy; print(numpy.__version__)')"
+    constraints="$(mktemp "${TMPDIR:-$PREFIX/tmp}/musicforge-constraints.XXXXXX")"
+    trap 'rm -f "$constraints"' EXIT
+    grep -v '^numpy==' requirements/quality-constraints.txt > "$constraints"
+    printf 'numpy==%s\n' "$native_version" >> "$constraints"
+    echo "Using Termux native NumPy $native_version"
+fi
+"$env_dir/bin/python" -m pip --isolated install --upgrade -c "$constraints" -e '.[analysis,dev,quality]'
 "$env_dir/bin/python" -m pip check

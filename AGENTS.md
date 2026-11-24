@@ -103,3 +103,6 @@ Favor correctness, traceability, and maintainability over adding features quickl
 - For libSDRForge IQ captures, prefer `bash scripts/run_rtlsdr_termux_logged.sh examples/rds_iq_replay.py capture --frequency 94.7 --seconds 3 --acquisition-mode async --output "$HOME/probe.iq"` in libSDRForge. The explicitly saved IQ file is a persistent artifact; do not wrap the launcher in a live clipboard pipeline.
 - Complete Termux:API GPS lookups before USB-authorized capture. Never expose GPS coordinates in diagnostic logs by default.
 - On Termux, RTL-SDR acquisition must use **async** mode, never sync.
+
+- On Termux, use the packaged native NumPy through the quality setup script;
+  do not enable general system-site-packages access or rebuild NumPy solely for quality checks.
