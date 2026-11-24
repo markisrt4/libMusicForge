@@ -11,7 +11,7 @@ Build a reusable, provider-agnostic **music metadata, statistics, and discovery 
 1. Inspect the current tree, README, tests, and existing conventions. Do not assume planned modules already exist.
 2. Search for an existing implementation or abstraction before creating a new one.
 3. Keep changes small and scoped; document assumptions and unresolved provider limitations.
-4. Use a feature branch and pull request for substantive changes. Do not directly modify `main` unless explicitly instructed.
+4. Obtain explicit approval before creating or switching to a new feature branch. Use pull requests for substantive changes. Do not directly modify `main` unless explicitly instructed.
 
 ## Architecture
 
@@ -37,6 +37,13 @@ Build a reusable, provider-agnostic **music metadata, statistics, and discovery 
 - Avoid unnecessary dependencies and premature frameworks.
 - Update README and examples whenever public behavior or setup changes.
 - Never describe a planned feature as implemented.
+
+## Quality environment
+
+- Keep runtime dependencies in `.venv` and quality dependencies in `.venv-quality`.
+- Use `bash scripts/setup_quality_env.sh` and `bash scripts/dev_check.sh` with pinned constraints.
+- Use `ruff check`, `ruff format`, and `python -m pytest`; never invoke Ruff through Python.
+- CI enforces lint, strict typing and packaging. Formatting can be checked or applied locally; repository-wide enforcement follows a dedicated formatting pass.
 
 ## Verification and reporting
 

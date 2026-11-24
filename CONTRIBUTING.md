@@ -17,11 +17,13 @@ From a checkout of your feature branch, use Python 3.11 or later:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[analysis,dev]'
-python -m pytest -q
+python -m pip install -e '.[analysis]'
+deactivate
+bash scripts/setup_quality_env.sh
+bash scripts/dev_check.sh --all
 ```
 
-The pull-request workflows run pytest on Python 3.11–3.13, along with lint,
+The isolated quality environment uses pinned constraints. Use `--test` for pytest, `--format` to apply Ruff fixes, and `--build` for packaging. `--all` runs static checks only. The pull-request workflows run pytest on Python 3.11–3.13, along with lint,
 type and packaging checks. The manually dispatched full gate also checks Ruff, mypy and packaging.
 
 ## A quick architecture tour

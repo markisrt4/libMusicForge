@@ -17,12 +17,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install package and tools
-        run: python -m pip install -e ".[analysis,dev,quality]"
+        run: bash scripts/setup_quality_env.sh
       - name: Unit tests
-        run: python -m pytest -q
+        run: bash scripts/dev_check.sh --test
       - name: Lint
-        run: python -m ruff check src tests
+        run: bash scripts/dev_check.sh --lint
       - name: Type check
-        run: python -m mypy
+        run: bash scripts/dev_check.sh --types
       - name: Build distributions
-        run: python -m build
+        run: bash scripts/dev_check.sh --build
