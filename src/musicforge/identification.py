@@ -1,4 +1,4 @@
-"""Cross-provider lookup with explicit, non-authoritative name matching.
+"""! @brief Cross-provider lookup with explicit, non-authoritative name matching.
 
 MusicBrainz identifies candidate recordings; Last.fm statistics are looked up
 by artist/title, not by MusicBrainz recording ID. No identity equivalence is
@@ -12,15 +12,37 @@ from musicforge.models import Recording, Statistic
 
 
 class RecordingSearchIf(Protocol):
-    async def search_recordings(self, artist: str, title: str) -> list[Recording]: ...
+    """! @brief Contract for recording candidate searches."""
+
+    async def search_recordings(self, artist: str, title: str) -> list[Recording]:
+        """! @brief Find candidate recordings by artist and title.
+
+        @param self Current instance.
+        @param artist Artist name.
+        @param title Track title.
+        @return Matching recording candidates.
+        """
+        ...
 
 
 class TrackStatisticsIf(Protocol):
-    async def track_statistics(self, artist: str, title: str) -> list[Statistic]: ...
+    """! @brief Contract for track statistics lookup."""
+
+    async def track_statistics(self, artist: str, title: str) -> list[Statistic]:
+        """! @brief Retrieve provider-attributed track statistics.
+
+        @param self Current instance.
+        @param artist Artist name.
+        @param title Track title.
+        @return Available provider-attributed track metrics.
+        """
+        ...
 
 
 @dataclass(frozen=True, slots=True)
 class EnrichedTrack:
+    """! @brief Independent recording candidates and statistics with partial failure information."""
+
     requested_artist: str
     requested_title: str
     candidates: tuple[Recording, ...]
@@ -37,7 +59,13 @@ async def identify_and_enrich(
     artist: str,
     title: str,
 ) -> EnrichedTrack:
-    """Retrieve MusicBrainz candidates and independent Last.fm track metrics.
+    """! @brief Retrieve MusicBrainz candidates and independent Last.fm track metrics.
+
+    @param metadata Recording search provider.
+    @param statistics Track statistics provider.
+    @param artist Artist name.
+    @param title Track title.
+    @return Independent lookup results with partial failures retained.
 
     Results deliberately retain *all* recording candidates. Last.fm totals
     are associated with the artist/title query, never with an individual

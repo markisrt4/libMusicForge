@@ -1,1 +1,1 @@
-"""Provider adapters for external music services."""
+"""! @brief Provider adapters for external music services."""

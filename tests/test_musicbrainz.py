@@ -12,7 +12,14 @@ RECORDING = {
     "id": RID,
     "title": "Burn",
     "length": 234000,
-    "artist-credit": [{"artist": {"id": "9f4a21b2-bdc1-4a3b-b35a-45f0a4a6b98e", "name": "Collective Soul"}}],
+    "artist-credit": [
+        {
+            "artist": {
+                "id": "9f4a21b2-bdc1-4a3b-b35a-45f0a4a6b98e",
+                "name": "Collective Soul",
+            }
+        }
+    ],
 }
 
 
@@ -30,9 +37,13 @@ def test_search_and_normalization() -> None:
     async def scenario() -> None:
         async with (
             httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client,
-            MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0) as provider,
+            MusicBrainzAdapter(
+                contact="dev@example.org", client=client, min_interval=0
+            ) as provider,
         ):
-            results = await MusicForge([provider]).search_track("Collective Soul", "Burn")
+            results = await MusicForge([provider]).search_track(
+                "Collective Soul", "Burn"
+            )
         assert len(results) == 1
         assert results[0].artists[0].name == "Collective Soul"
         assert results[0].duration_ms == 234000
@@ -47,20 +58,29 @@ def test_search_and_normalization() -> None:
 def test_recording_and_release_lookup() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         if "/release/" in request.url.path:
-            return httpx.Response(200, json={
-                "title": "Home",
-                "artist-credit": RECORDING["artist-credit"],
-                "media": [{"tracks": [{"recording": RECORDING}]}],
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "title": "Home",
+                    "artist-credit": RECORDING["artist-credit"],
+                    "media": [{"tracks": [{"recording": RECORDING}]}],
+                },
+            )
         return httpx.Response(200, json=RECORDING)
 
     async def scenario() -> None:
         async with (
             httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client,
-            MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0) as adapter,
+            MusicBrainzAdapter(
+                contact="dev@example.org", client=client, min_interval=0
+            ) as adapter,
         ):
-            recording = await adapter.get_recording(Identifier("musicbrainz:recording", RID))
-            release = await adapter.get_release(Identifier("musicbrainz:release", ALBUM))
+            recording = await adapter.get_recording(
+                Identifier("musicbrainz:recording", RID)
+            )
+            release = await adapter.get_release(
+                Identifier("musicbrainz:release", ALBUM)
+            )
             assert recording is not None and recording.title == "Burn"
             assert release is not None and release.title == "Home"
             assert release.recordings[0].title == "Burn"
@@ -71,15 +91,26 @@ def test_recording_and_release_lookup() -> None:
 def test_404_returns_none_and_500_raises() -> None:
     async def scenario() -> None:
         for status in (404, 500):
-            async with httpx.AsyncClient(transport=httpx.MockTransport(
-                lambda request, status=status: httpx.Response(status)
-            )) as client:
-                adapter = MusicBrainzAdapter(contact="dev@example.org", client=client, min_interval=0)
+            async with httpx.AsyncClient(
+                transport=httpx.MockTransport(
+                    lambda request, status=status: httpx.Response(status)
+                )
+            ) as client:
+                adapter = MusicBrainzAdapter(
+                    contact="dev@example.org", client=client, min_interval=0
+                )
                 if status == 404:
-                    assert await adapter.get_recording(Identifier("musicbrainz:recording", RID)) is None
+                    assert (
+                        await adapter.get_recording(
+                            Identifier("musicbrainz:recording", RID)
+                        )
+                        is None
+                    )
                 else:
                     with pytest.raises(MusicBrainzError):
-                        await adapter.get_recording(Identifier("musicbrainz:recording", RID))
+                        await adapter.get_recording(
+                            Identifier("musicbrainz:recording", RID)
+                        )
 
     run(scenario())
 
@@ -107,10 +138,12 @@ def test_transient_503_retries_then_succeeds() -> None:
         return httpx.Response(200, json={"recordings": [RECORDING]})
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, \
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client,
             MusicBrainzAdapter(
-            contact="dev@example.org", client=client, min_interval=0, max_retries=2
-            ) as adapter:
+                contact="dev@example.org", client=client, min_interval=0, max_retries=2
+            ) as adapter,
+        ):
             results = await adapter.search_recordings("Collective Soul", "Burn")
             assert results[0].title == "Burn"
 
@@ -126,10 +159,12 @@ def test_503_exhaustion_raises() -> None:
         return httpx.Response(503)
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, \
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client,
             MusicBrainzAdapter(
-            contact="dev@example.org", client=client, min_interval=0, max_retries=0
-            ) as adapter:
+                contact="dev@example.org", client=client, min_interval=0, max_retries=0
+            ) as adapter,
+        ):
             with pytest.raises(MusicBrainzError, match="503"):
                 await adapter.search_recordings("Collective Soul", "Burn")
 
@@ -140,19 +175,27 @@ def test_503_exhaustion_raises() -> None:
 def test_recording_details_include_release_context() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.params["inc"] == "artist-credits+releases"
-        return httpx.Response(200, json={
-            **RECORDING,
-            "releases": [
-                {"id": ALBUM, "title": "Home", "date": "1995-03-14"},
-                {"id": "aa70d53e-2904-452e-bef5-b2780c5c21cb", "title": "Greatest Hits"},
-            ],
-        })
+        return httpx.Response(
+            200,
+            json={
+                **RECORDING,
+                "releases": [
+                    {"id": ALBUM, "title": "Home", "date": "1995-03-14"},
+                    {
+                        "id": "aa70d53e-2904-452e-bef5-b2780c5c21cb",
+                        "title": "Greatest Hits",
+                    },
+                ],
+            },
+        )
 
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, \
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client,
             MusicBrainzAdapter(
-            contact="dev@example.org", client=client, min_interval=0
-            ) as adapter:
+                contact="dev@example.org", client=client, min_interval=0
+            ) as adapter,
+        ):
             details = await adapter.get_recording_details(
                 Identifier("musicbrainz:recording", RID)
             )
@@ -168,14 +211,19 @@ def test_recording_details_include_release_context() -> None:
 
 def test_recording_details_not_found() -> None:
     async def scenario() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(
-            lambda request: httpx.Response(404)
-        )) as client, \
+        async with (
+            httpx.AsyncClient(
+                transport=httpx.MockTransport(lambda request: httpx.Response(404))
+            ) as client,
             MusicBrainzAdapter(
-            contact="dev@example.org", client=client, min_interval=0
-            ) as adapter:
-            assert await adapter.get_recording_details(
-                Identifier("musicbrainz:recording", RID)
-            ) is None
+                contact="dev@example.org", client=client, min_interval=0
+            ) as adapter,
+        ):
+            assert (
+                await adapter.get_recording_details(
+                    Identifier("musicbrainz:recording", RID)
+                )
+                is None
+            )
 
     run(scenario())

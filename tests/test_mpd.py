@@ -6,8 +6,10 @@ from musicforge.providers.mpd import MpdError, MpdPlaybackSource
 
 
 async def scenario(
-    state: str = "play", song: str = "Title: Burn\nArtist: Collective Soul\nAlbum: Home\nduration: 215.4\nfile: burn.flac\n",
-    password: str | None = None, error: str | None = None,
+    state: str = "play",
+    song: str = "Title: Burn\nArtist: Collective Soul\nAlbum: Home\nduration: 215.4\nfile: burn.flac\n",
+    password: str | None = None,
+    error: str | None = None,
 ):
     commands = []
 
@@ -70,7 +72,9 @@ def test_password_and_ack() -> None:
 def test_missing_tags_and_bad_duration() -> None:
     track, _ = asyncio.run(scenario(song="Title: Burn\nduration: bad\n"))
     assert track is None
-    track, _ = asyncio.run(scenario(song="Title: Burn\nArtist: Collective Soul\nduration: bad\n"))
+    track, _ = asyncio.run(
+        scenario(song="Title: Burn\nArtist: Collective Soul\nduration: bad\n")
+    )
     assert track.duration_ms is None
 
 

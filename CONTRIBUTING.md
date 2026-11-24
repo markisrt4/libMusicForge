@@ -17,12 +17,15 @@ From a checkout of your feature branch, use Python 3.11 or later:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[analysis,dev]'
-python -m pytest -q
+python -m pip install -e '.[analysis]'
+deactivate
+bash scripts/setup_quality_env.sh
+bash scripts/dev_check.sh --all
 ```
 
-The pull-request workflows run pytest on Python 3.11–3.13, along with lint,
-type and packaging checks. The manually dispatched full gate also checks Ruff, mypy and packaging.
+The isolated quality environment uses pinned constraints. Use `--test` for pytest, `--format` to apply Ruff fixes, and `--build` for packaging. `--all` runs static checks only. A single Python CI workflow runs all quality gates on pull requests, main
+pushes and manual dispatch. Tests run on Python 3.11–3.13; static checks,
+packaging and Doxygen run once on Python 3.13. Obsolete runs are cancelled.
 
 ## A quick architecture tour
 
@@ -57,3 +60,26 @@ Work on a feature branch. Explain what changed, how to reproduce it,
 which checks passed and which ones need hardware or a live service.
 Remove private data and credentials from logs, preserve existing license
 notices, and follow [AGENTS.md](AGENTS.md) for repository-specific checks.
+
+On Termux, install `python-numpy` with `pkg` before quality setup. The setup
+script links the native NumPy package and metadata into the isolated environment
+and constrains pip to that installed version. Ubuntu CI retains its pinned NumPy
+versions. Other system packages remain isolated.
+
+Termux also requires native `ruff` (`pkg install ruff`). The quality setup
+uses that executable instead of compiling Ruff with pip. Its version may
+differ from the pinned CI version; CI remains authoritative.
+
+On Termux, the checker passes `--no-native-parser` to mypy to avoid the
+incompatible ast_serialize extension. Strict typing remains enabled. Both
+`--lint` and `--all` enforce Ruff formatting.
+
+## API documentation
+
+Run `bash scripts/dev_check.sh --docs` with Doxygen 1.15.0. The quality
+installer provisions a checksum-verified upstream binary on Linux x86_64.
+Other platforms may use CI for this check. HTML is generated under
+`build/doxygen/html`. CI treats Doxygen warnings as errors. Public API coverage is mandatory in CI and in `--all` and `--docs`.
+Use `--docstrings` for the coverage audit without Doxygen. Public symbols
+require Doxygen docstrings with `@brief`, declared `@param` entries and
+`@return` for value-returning functions.

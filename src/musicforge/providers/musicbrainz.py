@@ -1,4 +1,4 @@
-"""Async MusicBrainz search and lookup adapter.
+"""! @brief Async MusicBrainz search and lookup adapter.
 
 Uses the public MusicBrainz JSON API. Supply a descriptive contact email in
 the User-Agent and respect MusicBrainz's published rate-limit requirements.
@@ -20,11 +20,13 @@ _RETRYABLE = {429, 502, 503, 504}
 
 
 class MusicBrainzError(RuntimeError):
-    """MusicBrainz request or response could not be processed."""
+    """! @brief MusicBrainz request or response could not be processed."""
 
 
 @dataclass(frozen=True, slots=True)
 class ReleaseSummary:
+    """! @brief Release title, optional date and identifier."""
+
     title: str
     date: str | None
     identifier: Identifier
@@ -32,12 +34,14 @@ class ReleaseSummary:
 
 @dataclass(frozen=True, slots=True)
 class RecordingDetails:
+    """! @brief Recording metadata and associated release summaries."""
+
     recording: Recording
     releases: tuple[ReleaseSummary, ...] = ()
 
 
 class MusicBrainzAdapter:
-    """MusicBrainz metadata provider with serialized, throttled requests.
+    """! @brief MusicBrainz metadata provider with serialized, throttled requests.
 
     Instances own their HTTP client unless one is supplied for testing.
     Use as an async context manager or call aclose() when finished.
@@ -53,6 +57,16 @@ class MusicBrainzAdapter:
         min_interval: float = 1.1,
         max_retries: int = 2,
     ) -> None:
+        """! @brief Initialize the configured instance.
+
+        @param self Current instance.
+        @param contact Contact address for the User-Agent.
+        @param app_name Application name for the User-Agent.
+        @param app_version Application version for the User-Agent.
+        @param client Optional externally owned HTTP client.
+        @param min_interval Minimum request spacing in seconds.
+        @param max_retries Maximum retries after initial request.
+        """
         if not contact.strip():
             raise ValueError("MusicBrainz requires a nonempty contact address")
         if max_retries < 0:
@@ -68,12 +82,26 @@ class MusicBrainzAdapter:
         self._last_request: float | None = None
 
     async def __aenter__(self) -> Self:
+        """! @brief Enter the asynchronous context.
+
+        @param self Current instance.
+        @return Current instance.
+        """
         return self
 
     async def __aexit__(self, *_exc: object) -> None:
+        """! @brief Exit the asynchronous context.
+
+        @param self Current instance.
+        @param _exc Context exit exception information.
+        """
         await self.aclose()
 
     async def aclose(self) -> None:
+        """! @brief Close the HTTP client if owned by this adapter.
+
+        @param self Current instance.
+        """
         if self._owns_client:
             await self._client.aclose()
 
@@ -99,7 +127,7 @@ class MusicBrainzAdapter:
                         exc.response.status_code in _RETRYABLE
                         and attempt < self._max_retries
                     ):
-                        delay = min(2.0 * (2 ** attempt), 15.0)
+                        delay = min(2.0 * (2**attempt), 15.0)
                         retry_after = exc.response.headers.get("Retry-After")
                         if retry_after:
                             try:
@@ -119,26 +147,47 @@ class MusicBrainzAdapter:
                         f"MusicBrainz HTTP {exc.response.status_code}"
                     ) from exc
                 except (httpx.TransportError, ValueError) as exc:
-                    if isinstance(exc, httpx.TransportError) and attempt < self._max_retries:
-                        await asyncio.sleep(min(2.0 * (2 ** attempt), 15.0))
+                    if (
+                        isinstance(exc, httpx.TransportError)
+                        and attempt < self._max_retries
+                    ):
+                        await asyncio.sleep(min(2.0 * (2**attempt), 15.0))
                         continue
-                    raise MusicBrainzError(f"MusicBrainz request failed: {exc}") from exc
+                    raise MusicBrainzError(
+                        f"MusicBrainz request failed: {exc}"
+                    ) from exc
                 if not isinstance(payload, dict):
                     raise MusicBrainzError("MusicBrainz returned a non-object response")
                 return payload
             raise AssertionError("unreachable retry state")
 
     async def search_recordings(self, artist: str, title: str) -> list[Recording]:
-        """Search recordings; results may represent multiple performances."""
+        """! @brief Search recordings; results may represent multiple performances.
+
+        @param self Current instance.
+        @param artist Artist name.
+        @param title Track title.
+        @return Matching recording candidates.
+        """
         if not artist.strip() or not title.strip():
             raise ValueError("artist and title are required")
         query = f'recording:"{_escape(title)}" AND artist:"{_escape(artist)}"'
         data = await self._get("recording", {"query": query, "limit": "25"})
-        return [_recording(item) for item in data.get("recordings", [])
-                if isinstance(item, dict) and item.get("title")]
+        return [
+            _recording(item)
+            for item in data.get("recordings", [])
+            if isinstance(item, dict) and item.get("title")
+        ]
 
-    async def get_recording_details(self, identifier: Identifier) -> "RecordingDetails | None":
-        """Fetch release context for a specific MusicBrainz recording."""
+    async def get_recording_details(
+        self, identifier: Identifier
+    ) -> "RecordingDetails | None":
+        """! @brief Fetch release context for a specific MusicBrainz recording.
+
+        @param self Current instance.
+        @param identifier Provider-scoped entity identifier.
+        @return Recording and release context, or None if not found.
+        """
         _validate(identifier, "recording")
         try:
             data = await self._get(
@@ -160,6 +209,12 @@ class MusicBrainzAdapter:
         return RecordingDetails(recording=_recording(data), releases=releases)
 
     async def get_recording(self, identifier: Identifier) -> Recording | None:
+        """! @brief Retrieve recording metadata by identifier.
+
+        @param self Current instance.
+        @param identifier Provider-scoped entity identifier.
+        @return Recording, or None if not found.
+        """
         _validate(identifier, "recording")
         try:
             data = await self._get(
@@ -172,6 +227,12 @@ class MusicBrainzAdapter:
         return _recording(data)
 
     async def get_release(self, identifier: Identifier) -> Release | None:
+        """! @brief Retrieve release metadata by identifier.
+
+        @param self Current instance.
+        @param identifier Provider-scoped entity identifier.
+        @return Release, or None if not found.
+        """
         _validate(identifier, "release")
         try:
             data = await self._get(
@@ -198,7 +259,10 @@ class MusicBrainzAdapter:
 
 
 def _is_not_found(exc: MusicBrainzError) -> bool:
-    return isinstance(exc.__cause__, httpx.HTTPStatusError) and exc.__cause__.response.status_code == 404
+    return (
+        isinstance(exc.__cause__, httpx.HTTPStatusError)
+        and exc.__cause__.response.status_code == 404
+    )
 
 
 def _validate(identifier: Identifier, kind: str) -> None:
@@ -225,11 +289,14 @@ def _artists(credits: object) -> tuple[Artist, ...]:
         artist = credit.get("artist")
         if isinstance(artist, dict):
             identifier = artist.get("id")
-            result.append(Artist(
-                name=str(artist.get("name", "")),
-                identifiers=(Identifier("musicbrainz:artist", str(identifier)),)
-                if identifier else (),
-            ))
+            result.append(
+                Artist(
+                    name=str(artist.get("name", "")),
+                    identifiers=(Identifier("musicbrainz:artist", str(identifier)),)
+                    if identifier
+                    else (),
+                )
+            )
     return tuple(result)
 
 
@@ -240,6 +307,9 @@ def _recording(data: dict[str, Any]) -> Recording:
         title=str(data.get("title", "")),
         artists=_artists(data.get("artist-credit", [])),
         identifiers=(Identifier("musicbrainz:recording", str(identifier)),)
-        if identifier else (),
-        duration_ms=duration if isinstance(duration, int) and not isinstance(duration, bool) else None,
+        if identifier
+        else (),
+        duration_ms=duration
+        if isinstance(duration, int) and not isinstance(duration, bool)
+        else None,
     )

@@ -21,10 +21,16 @@ def metric(name: str, value: int, provider: str = "lastfm") -> Statistic:
 class FakeProvider:
     async def track_statistics(self, artist: str, title: str) -> list[Statistic]:
         if title == "Burn":
-            return [metric("global_listener_count", 1559), metric("global_scrobble_count", 7002)]
+            return [
+                metric("global_listener_count", 1559),
+                metric("global_scrobble_count", 7002),
+            ]
         if title == "Unknown":
             return []
-        return [metric("global_listener_count", 100), metric("global_scrobble_count", 1000)]
+        return [
+            metric("global_listener_count", 100),
+            metric("global_scrobble_count", 1000),
+        ]
 
 
 def test_compare_sort_and_ratio() -> None:
@@ -49,7 +55,8 @@ def test_compare_sort_and_ratio() -> None:
 def test_missing_counts_and_invalid_sort() -> None:
     async def scenario() -> None:
         rows = await compare_tracks(
-            FakeProvider(), [("Band", "Unknown"), ("Band", "Other")],
+            FakeProvider(),
+            [("Band", "Unknown"), ("Band", "Other")],
             sort_by="ratio",
         )
         assert rows[-1].scrobbles_per_listener is None

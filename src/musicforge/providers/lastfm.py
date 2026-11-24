@@ -1,4 +1,4 @@
-"""Last.fm artist and track statistics via the public API.
+"""! @brief Last.fm artist and track statistics via the public API.
 
 The metrics are Last.fm scrobbles/listeners, never Spotify stream counts.
 """
@@ -14,11 +14,11 @@ _API_URL = "https://ws.audioscrobbler.com/2.0/"
 
 
 class LastFmError(RuntimeError):
-    """Last.fm API request or response failed."""
+    """! @brief Last.fm API request or response failed."""
 
 
 class LastFmAdapter:
-    """Read-only Last.fm statistics provider.
+    """! @brief Read-only Last.fm statistics provider.
 
     Provide an API key via configuration; never embed credentials in source.
     The client is closed only if the adapter created it.
@@ -30,6 +30,12 @@ class LastFmAdapter:
         api_key: str,
         client: httpx.AsyncClient | None = None,
     ) -> None:
+        """! @brief Initialize the configured instance.
+
+        @param self Current instance.
+        @param api_key Nonempty Last.fm API key.
+        @param client Optional externally owned HTTP client.
+        """
         if not api_key.strip():
             raise ValueError("Last.fm API key must not be empty")
         self._api_key = api_key
@@ -37,12 +43,26 @@ class LastFmAdapter:
         self._owns_client = client is None
 
     async def __aenter__(self) -> Self:
+        """! @brief Enter the asynchronous context.
+
+        @param self Current instance.
+        @return Current instance.
+        """
         return self
 
     async def __aexit__(self, *_exc: object) -> None:
+        """! @brief Exit the asynchronous context.
+
+        @param self Current instance.
+        @param _exc Context exit exception information.
+        """
         await self.aclose()
 
     async def aclose(self) -> None:
+        """! @brief Close the HTTP client if owned by this adapter.
+
+        @param self Current instance.
+        """
         if self._owns_client:
             await self._client.aclose()
 
@@ -71,7 +91,12 @@ class LastFmAdapter:
         return payload
 
     async def artist_statistics(self, artist: str) -> list[Statistic]:
-        """Get global Last.fm listener and scrobble totals for an artist."""
+        """! @brief Get global Last.fm listener and scrobble totals for an artist.
+
+        @param self Current instance.
+        @param artist Artist name.
+        @return Available Last.fm artist listener and scrobble counts.
+        """
         if not artist.strip():
             raise ValueError("artist must not be empty")
         payload = await self._request("artist.getinfo", artist=artist)
@@ -82,10 +107,18 @@ class LastFmAdapter:
         if not isinstance(stats, dict):
             raise LastFmError("Last.fm artist response missing stats")
         subject = Identifier("lastfm:artist", str(data.get("name") or artist))
-        return _statistics(stats, subject, {"listeners": "listeners", "playcount": "scrobbles"})
+        return _statistics(
+            stats, subject, {"listeners": "listeners", "playcount": "scrobbles"}
+        )
 
     async def track_statistics(self, artist: str, title: str) -> list[Statistic]:
-        """Get global Last.fm listener and scrobble totals for a track."""
+        """! @brief Get global Last.fm listener and scrobble totals for a track.
+
+        @param self Current instance.
+        @param artist Artist name.
+        @param title Track title.
+        @return Available provider-attributed track metrics.
+        """
         if not artist.strip() or not title.strip():
             raise ValueError("artist and title must not be empty")
         payload = await self._request("track.getInfo", artist=artist, track=title)
@@ -93,12 +126,16 @@ class LastFmAdapter:
         if not isinstance(data, dict):
             raise LastFmError("Last.fm track response missing track")
         actual_artist = data.get("artist")
-        artist_name = actual_artist.get("name") if isinstance(actual_artist, dict) else artist
+        artist_name = (
+            actual_artist.get("name") if isinstance(actual_artist, dict) else artist
+        )
         subject = Identifier(
             "lastfm:track",
             f"{artist_name}::{data.get('name') or title}",
         )
-        return _statistics(data, subject, {"listeners": "listeners", "playcount": "scrobbles"})
+        return _statistics(
+            data, subject, {"listeners": "listeners", "playcount": "scrobbles"}
+        )
 
 
 def _statistics(
@@ -121,7 +158,9 @@ def _statistics(
         results.append(
             Statistic(
                 provider="lastfm",
-                metric="global_listener_count" if field == "listeners" else "global_scrobble_count",
+                metric="global_listener_count"
+                if field == "listeners"
+                else "global_scrobble_count",
                 value=count,
                 observed_at=observed_at,
                 unit=unit,

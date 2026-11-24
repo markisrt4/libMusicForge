@@ -29,4 +29,6 @@ def test_provider_protocol_is_structural() -> None:
 
 
 def test_identifier_keeps_namespace() -> None:
-    assert Identifier("musicbrainz:recording", "abc") != Identifier("spotify:track", "abc")
+    assert Identifier("musicbrainz:recording", "abc") != Identifier(
+        "spotify:track", "abc"
+    )

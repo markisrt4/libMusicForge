@@ -11,7 +11,7 @@ Build a reusable, provider-agnostic **music metadata, statistics, and discovery 
 1. Inspect the current tree, README, tests, and existing conventions. Do not assume planned modules already exist.
 2. Search for an existing implementation or abstraction before creating a new one.
 3. Keep changes small and scoped; document assumptions and unresolved provider limitations.
-4. Use a feature branch and pull request for substantive changes. Do not directly modify `main` unless explicitly instructed.
+4. Obtain explicit approval before creating or switching to a new feature branch. Use pull requests for substantive changes. Do not directly modify `main` unless explicitly instructed.
 
 ## Architecture
 
@@ -37,6 +37,14 @@ Build a reusable, provider-agnostic **music metadata, statistics, and discovery 
 - Avoid unnecessary dependencies and premature frameworks.
 - Update README and examples whenever public behavior or setup changes.
 - Never describe a planned feature as implemented.
+
+## Quality environment
+
+- Keep runtime dependencies in `.venv` and quality dependencies in `.venv-quality`.
+- Use `bash scripts/setup_quality_env.sh` and `bash scripts/dev_check.sh` with pinned constraints.
+- Use `ruff check`, `ruff format`, and `python -m pytest`; never invoke Ruff through Python.
+- CI enforces lint, formatting, strict typing and packaging.
+- On Termux, use native Ruff and mypy with `--no-native-parser`; retain strict typing and the pinned mypy version.
 
 ## Verification and reporting
 
@@ -96,3 +104,6 @@ Favor correctness, traceability, and maintainability over adding features quickl
 - For libSDRForge IQ captures, prefer `bash scripts/run_rtlsdr_termux_logged.sh examples/rds_iq_replay.py capture --frequency 94.7 --seconds 3 --acquisition-mode async --output "$HOME/probe.iq"` in libSDRForge. The explicitly saved IQ file is a persistent artifact; do not wrap the launcher in a live clipboard pipeline.
 - Complete Termux:API GPS lookups before USB-authorized capture. Never expose GPS coordinates in diagnostic logs by default.
 - On Termux, RTL-SDR acquisition must use **async** mode, never sync.
+
+- On Termux, use the packaged native NumPy through the quality setup script;
+  do not enable general system-site-packages access or rebuild NumPy solely for quality checks.
