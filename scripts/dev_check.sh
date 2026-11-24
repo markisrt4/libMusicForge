@@ -47,7 +47,7 @@ run_checks() {
     if [ "$mode" = --test ]; then
         python -m pytest -q || rc=1
     fi
-    if [ "$mode" = --docstrings ]; then
+    if [ "$mode" = --docstrings ] || [ "$mode" = --docs ] || [ "$mode" = --all ]; then
         python scripts/check_docstrings.py || rc=1
     fi
     if [ "$mode" = --docs ]; then

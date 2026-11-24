@@ -24,6 +24,8 @@ jobs:
         run: bash scripts/dev_check.sh --lint
       - name: Type check
         run: bash scripts/dev_check.sh --types
+      - name: Public API documentation coverage
+        run: bash scripts/dev_check.sh --docstrings
       - name: Build distributions
         run: bash scripts/dev_check.sh --build
       - name: Documentation

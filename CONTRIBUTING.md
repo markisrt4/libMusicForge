@@ -78,6 +78,7 @@ incompatible ast_serialize extension. Strict typing remains enabled. Both
 Run `bash scripts/dev_check.sh --docs` with Doxygen 1.15.0. The quality
 installer provisions a checksum-verified upstream binary on Linux x86_64.
 Other platforms may use CI for this check. HTML is generated under
-`build/doxygen/html`. CI treats Doxygen warnings as errors. The initial
-baseline checks documentation syntax; complete public API coverage is a
-separate follow-up.
+`build/doxygen/html`. CI treats Doxygen warnings as errors. Public API coverage is mandatory in CI and in `--all` and `--docs`.
+Use `--docstrings` for the coverage audit without Doxygen. Public symbols
+require Doxygen docstrings with `@brief`, declared `@param` entries and
+`@return` for value-returning functions.
