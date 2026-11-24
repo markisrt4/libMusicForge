@@ -13,7 +13,15 @@ if ! grep -Eiq '^include-system-site-packages *= *false$' "$env_dir/pyvenv.cfg";
     exit 1
 fi
 constraints="$PWD/requirements/quality-constraints.txt"
+extras="analysis,dev,quality"
 if [ -n "${TERMUX_VERSION:-}" ] || [[ "${PREFIX:-}" == */com.termux/files/usr ]]; then
+    if [ ! -x "$PREFIX/bin/ruff" ]; then
+        echo "Install native Ruff with pkg install ruff first." >&2
+        exit 1
+    fi
+    extras="analysis,dev,quality-termux"
+    ln -sfn "$PREFIX/bin/ruff" "$env_dir/bin/ruff"
+    "$env_dir/bin/ruff" --version
     # Expose only the native NumPy package and its distribution metadata.
     "$env_dir/bin/python" - "$PREFIX/bin/python" <<'PY'
 import pathlib
@@ -40,5 +48,5 @@ PY
     printf 'numpy==%s\n' "$native_version" >> "$constraints"
     echo "Using Termux native NumPy $native_version"
 fi
-"$env_dir/bin/python" -m pip --isolated install --upgrade -c "$constraints" -e '.[analysis,dev,quality]'
+"$env_dir/bin/python" -m pip --isolated install --upgrade -c "$constraints" -e ".[$extras]"
 "$env_dir/bin/python" -m pip check

@@ -64,3 +64,7 @@ On Termux, install `python-numpy` with `pkg` before quality setup. The setup
 script links the native NumPy package and metadata into the isolated environment
 and constrains pip to that installed version. Ubuntu CI retains its pinned NumPy
 versions. Other system packages remain isolated.
+
+Termux also requires native `ruff` (`pkg install ruff`). The quality setup
+uses that executable instead of compiling Ruff with pip. Its version may
+differ from the pinned CI version; CI remains authoritative.
