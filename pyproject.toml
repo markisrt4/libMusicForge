@@ -20,6 +20,23 @@ dev = ["pytest>=8"]
 quality = ["ruff>=0.6", "mypy>=1.11", "build>=1.2"]
 quality-termux = ["mypy>=1.11", "build>=1.2"]
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/docs",
+    "/examples",
+    "/component_test",
+    "/scripts",
+    "/requirements",
+    "/README.md",
+    "/LICENSE*",
+    "/NOTICE*",
+    "/CONTRIBUTING.md",
+    "/pyproject.toml",
+]
+exclude = ["**/__pycache__", "**/*.pyc", "**/.venv*", "**/.env*", "**/*.log"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/musicforge"]
 
