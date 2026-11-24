@@ -4,8 +4,8 @@ set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
 mode="${1:---all}"
 case "$mode" in
-    --all|--lint|--format|--types|--test|--build) ;;
-    *) echo "Usage: bash scripts/dev_check.sh [--all|--lint|--format|--types|--test|--build]" >&2; exit 2 ;;
+    --all|--lint|--format|--types|--test|--build|--docs) ;;
+    *) echo "Usage: bash scripts/dev_check.sh [--all|--lint|--format|--types|--test|--build|--docs]" >&2; exit 2 ;;
 esac
 if [ "$#" -gt 0 ]; then shift; fi
 if [ ! -x .venv-quality/bin/python ]; then
@@ -46,6 +46,17 @@ run_checks() {
     fi
     if [ "$mode" = --test ]; then
         python -m pytest -q || rc=1
+    fi
+    if [ "$mode" = --docs ]; then
+        if ! command -v doxygen >/dev/null 2>&1; then
+            echo "Doxygen 1.15.0 required; use Ubuntu CI or install it locally." >&2
+            return 1
+        fi
+        if ! doxygen --version | grep -Eq '^1\.15\.0([[:space:]]|$)'; then
+            echo "Doxygen 1.15.0 required." >&2
+            return 1
+        fi
+        mkdir -p build/doxygen && doxygen Doxyfile || rc=1
     fi
     if [ "$mode" = --build ]; then
         python -m build || rc=1

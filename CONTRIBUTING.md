@@ -72,3 +72,12 @@ differ from the pinned CI version; CI remains authoritative.
 On Termux, the checker passes `--no-native-parser` to mypy to avoid the
 incompatible ast_serialize extension. Strict typing remains enabled. Both
 `--lint` and `--all` enforce Ruff formatting.
+
+## API documentation
+
+Run `bash scripts/dev_check.sh --docs` with Doxygen 1.15.0. The quality
+installer provisions a checksum-verified upstream binary on Linux x86_64.
+Other platforms may use CI for this check. HTML is generated under
+`build/doxygen/html`. CI treats Doxygen warnings as errors. The initial
+baseline checks documentation syntax; complete public API coverage is a
+separate follow-up.
