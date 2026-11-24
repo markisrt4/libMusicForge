@@ -15,10 +15,12 @@ fi
 unset PYTHONPATH PYTHONHOME
 export PYTHONNOUSERSITE=1
 source .venv-quality/bin/activate
+mypy_args=(--no-incremental)
 if [ -n "${TERMUX_VERSION:-}" ] || [[ "${PREFIX:-}" == */com.termux/files/usr ]]; then
     log="$(mktemp "${TMPDIR:-$PREFIX/tmp}/musicforge-diagnostic.XXXXXX")" || exit 1
     trap 'rm -f "$log"' EXIT
     temporary_log=1
+    mypy_args+=(--no-native-parser)
 else
     log_dir="${XDG_CACHE_HOME:-$HOME/.cache}/musicforge"
     mkdir -p "$log_dir" || exit 1
@@ -33,14 +35,14 @@ run_checks() {
     if [ "$#" -eq 0 ]; then set -- src tests; fi
     if [ "$mode" = --all ] || [ "$mode" = --lint ]; then
         ruff check "$@" || rc=1
-        if [ "$mode" = --all ]; then ruff format --check "$@" || rc=1; fi
+        ruff format --check "$@" || rc=1
     fi
     if [ "$mode" = --format ]; then
         ruff check --fix "$@" || rc=1
         ruff format "$@" || rc=1
     fi
     if [ "$mode" = --all ] || [ "$mode" = --types ]; then
-        python -m mypy --no-incremental || rc=1
+        python -m mypy "${mypy_args[@]}" || rc=1
     fi
     if [ "$mode" = --test ]; then
         python -m pytest -q || rc=1

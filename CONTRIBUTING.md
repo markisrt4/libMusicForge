@@ -68,3 +68,7 @@ versions. Other system packages remain isolated.
 Termux also requires native `ruff` (`pkg install ruff`). The quality setup
 uses that executable instead of compiling Ruff with pip. Its version may
 differ from the pinned CI version; CI remains authoritative.
+
+On Termux, the checker passes `--no-native-parser` to mypy to avoid the
+incompatible ast_serialize extension. Strict typing remains enabled. Both
+`--lint` and `--all` enforce Ruff formatting.

@@ -43,7 +43,8 @@ Build a reusable, provider-agnostic **music metadata, statistics, and discovery 
 - Keep runtime dependencies in `.venv` and quality dependencies in `.venv-quality`.
 - Use `bash scripts/setup_quality_env.sh` and `bash scripts/dev_check.sh` with pinned constraints.
 - Use `ruff check`, `ruff format`, and `python -m pytest`; never invoke Ruff through Python.
-- CI enforces lint, strict typing and packaging. Formatting can be checked or applied locally; repository-wide enforcement follows a dedicated formatting pass.
+- CI enforces lint, formatting, strict typing and packaging.
+- On Termux, use native Ruff and mypy with `--no-native-parser`; retain strict typing and the pinned mypy version.
 
 ## Verification and reporting
 
