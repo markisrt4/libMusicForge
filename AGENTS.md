@@ -63,13 +63,29 @@ Build a reusable, provider-agnostic **music metadata, statistics, and discovery 
 
 Favor correctness, traceability, and maintainability over adding features quickly.
 
+## Automatic Ruff correction before commits
+
+- Before committing or pushing Python changes, run the pinned Ruff executable
+  with `ruff check --fix` and then `ruff format` on the Python files changed
+  by the task. Review the resulting diff and resolve remaining lint violations.
+- Use safe fixes only; never enable `--unsafe-fixes` without explicit approval.
+  Do not reformat unrelated files or overwrite unrelated user changes.
+- Focused Ruff correction and formatting (including a focused read-only Ruff
+  recheck) are explicitly authorized in the Codex VM as a narrow exception to
+  the execution restrictions below. This does not authorize dependency installs,
+  mypy, tests, builds, or broader quality checks.
+- If working through an API without a checkout or pinned Ruff executable,
+  review import ordering and formatting manually and disclose unrun checks.
+- CI remains read-only: enforce `ruff check` and `ruff format --check`.
+  Do not add workflows that automatically commit formatting corrections.
+
 ## Codex execution and CI cost policy
 
 - Do **not** run tests, lint, type checks, builds, quality gates, benchmarks, or validation scripts in the Codex cloud VM by default. This includes indirect invocations via Make, Gradle, npm, shell scripts, pre-commit hooks, or other wrappers.
 - Write and update meaningful tests alongside code changes, but delegate their execution to GitHub Actions. For device-dependent verification, give the user exact commands for their Linux, Raspberry Pi, or Android/Termux environment.
 - Read GitHub Actions logs, statuses, and downloadable reports to diagnose failures. Make targeted fixes and push them for CI to rerun. Do not rerun tests in the agent VM simply because CI fails.
 - Do not execute tests locally even when an existing repository instruction says to run focused checks. This section overrides such instructions for Codex cloud sessions. Static review of source and diffs without running validation tools is allowed.
-- Only run a check in the Codex VM if the user **explicitly authorizes that specific execution**. General requests such as 'fix it', 'verify', or 'make sure it works' are not authorization to consume Codex cloud execution for tests.
+- Except for focused Ruff operations authorized above, only run a check in the Codex VM if the user **explicitly authorizes that specific execution**. General requests such as 'fix it', 'verify', or 'make sure it works' are not authorization to consume Codex cloud execution for tests.
 - Clearly report which checks CI actually ran, which checks are pending, and which require physical hardware. Never imply unexecuted tests passed.
 - Do not install dependencies in the Codex VM solely to run checks, tests, builds, or other validation. Dependency installation needed for actual implementation must be justified separately.
 - Prefer concise CI failure summaries, JUnit XML artifacts, and the failing job's relevant log excerpt over reading entire workflow logs repeatedly.
