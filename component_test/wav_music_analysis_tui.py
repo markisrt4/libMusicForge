@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Mark G. Russell
 # SPDX-License-Identifier: MIT
 """Interactive terminal WAV analyzer. No ORC, GUI, or third-party TUI dependencies."""
+
 from __future__ import annotations
 
 import argparse
@@ -30,7 +31,11 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
     with wave.open(str(path), "rb") as wav:
         if wav.getcomptype() != "NONE":
             raise ValueError("Only uncompressed integer PCM WAV is supported")
-        rate, channels, width = wav.getframerate(), wav.getnchannels(), wav.getsampwidth()
+        rate, channels, width = (
+            wav.getframerate(),
+            wav.getnchannels(),
+            wav.getsampwidth(),
+        )
         if width not in (1, 2, 3, 4) or rate <= 0:
             raise ValueError("Unsupported WAV encoding")
         duration = wav.getnframes() / rate
@@ -62,9 +67,19 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
             if command == "play":
                 try:
                     player_process = subprocess.Popen(
-                        ["ffplay", "-nodisp", "-autoexit", "-loglevel", "error",
-                         "-nostats", "-volume", str(volume),
-                         "-ss", str(min(frame_index * fft_size / rate, duration)), str(path)],
+                        [
+                            "ffplay",
+                            "-nodisp",
+                            "-autoexit",
+                            "-loglevel",
+                            "error",
+                            "-nostats",
+                            "-volume",
+                            str(volume),
+                            "-ss",
+                            str(min(frame_index * fft_size / rate, duration)),
+                            str(path),
+                        ],
                         stdin=subprocess.DEVNULL,
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
@@ -85,13 +100,18 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
                 if key in (ord("q"), ord("Q"), 27):
                     break
                 if key in (ord("+"), ord("="), ord("-"), ord("_")):
-                    new_volume = max(0, min(100, volume + (10 if key in (ord("+"), ord("=")) else -10)))
+                    new_volume = max(
+                        0,
+                        min(100, volume + (10 if key in (ord("+"), ord("=")) else -10)),
+                    )
                     if new_volume != volume:
                         volume = new_volume
                         if playback:
                             player_command("stop")
                             player_command("play")
-                        status = f"Volume: {volume}% (FFplay restarts on volume changes)"
+                        status = (
+                            f"Volume: {volume}% (FFplay restarts on volume changes)"
+                        )
                 if key in (ord("r"), ord("R")):
                     if playback:
                         player_command("stop")
@@ -103,7 +123,10 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
                     if playback:
                         player_command("play")
                 elapsed = time.monotonic() - start
-                target_index = min(int(elapsed * rate / fft_size), (wav.getnframes() + fft_size - 1) // fft_size)
+                target_index = min(
+                    int(elapsed * rate / fft_size),
+                    (wav.getnframes() + fft_size - 1) // fft_size,
+                )
                 # Catch up with playback after slow frames; never show future audio.
                 while frame_index < target_index:
                     data = wav.readframes(fft_size)
@@ -130,7 +153,10 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
 
                 line(0, "libMusicForge | WAV Analysis TUI")
                 line(1, f"{path.name} | {rate} Hz | {channels} ch | {width * 8} bit")
-                line(2, f"{audio_time:6.1f}/{duration:.1f}s | {'FINISHED' if finished else 'RUNNING'} | {'FFPLAY' if playback else 'SILENT'}")
+                line(
+                    2,
+                    f"{audio_time:6.1f}/{duration:.1f}s | {'FINISHED' if finished else 'RUNNING'} | {'FFPLAY' if playback else 'SILENT'}",
+                )
                 line(3, f"q quit | r restart | +/- volume: {volume}% | --play FFplay")
                 line(4, status)
                 if latest is not None:
@@ -139,10 +165,18 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
                     line(7, f"BEAT   {bar(latest.beat, width_bar)} {latest.beat:.2f}")
                     for offset, name in enumerate(("bass", "mid", "treble")):
                         value = getattr(latest, name)
-                        line(9 + offset, f"{name.upper():6s} {bar(value, width_bar)} {value:.2f}")
-                    for offset, name in enumerate(("kick", "snare", "tom_high", "tom_mid", "tom_low", "cymbal")):
+                        line(
+                            9 + offset,
+                            f"{name.upper():6s} {bar(value, width_bar)} {value:.2f}",
+                        )
+                    for offset, name in enumerate(
+                        ("kick", "snare", "tom_high", "tom_mid", "tom_low", "cymbal")
+                    ):
                         value = getattr(latest.percussion, name)
-                        line(13 + offset, f"{name.upper():8s} {bar(value, width_bar)} {value:.2f}")
+                        line(
+                            13 + offset,
+                            f"{name.upper():8s} {bar(value, width_bar)} {value:.2f}",
+                        )
                     line(20, "SPECTRUM (low -> high)")
                     # 24 frequency bins as compact vertical bars.
                     spectrum = latest.spectrum
@@ -150,7 +184,18 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
                     rows = max(0, min(8, height - 23))
                     for row in range(rows):
                         threshold = (rows - row) / rows
-                        line(21 + row, "".join("##" if value >= threshold else "  " for value in spectrum[:usable // 2]) if columns >= 48 else "".join("#" if value >= threshold else " " for value in spectrum[:usable]))
+                        line(
+                            21 + row,
+                            "".join(
+                                "##" if value >= threshold else "  "
+                                for value in spectrum[: usable // 2]
+                            )
+                            if columns >= 48
+                            else "".join(
+                                "#" if value >= threshold else " "
+                                for value in spectrum[:usable]
+                            ),
+                        )
                 if height < 22:
                     line(height - 1, "Enlarge terminal for full dashboard")
                 screen.refresh()

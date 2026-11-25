@@ -34,8 +34,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Compare Last.fm track statistics")
     parser.add_argument("tracks", nargs="+", type=parse_track, metavar="ARTIST:TITLE")
     parser.add_argument(
-        "--sort", choices=("listeners", "scrobbles", "ratio"),
-        default="listeners", help="Comparison order (default: listeners)"
+        "--sort",
+        choices=("listeners", "scrobbles", "ratio"),
+        default="listeners",
+        help="Comparison order (default: listeners)",
     )
     parser.add_argument(
         "--ascending", action="store_true", help="Sort smallest values first"
@@ -48,8 +50,7 @@ def main() -> None:
     async def run() -> list[TrackComparison]:
         async with LastFmAdapter(api_key=api_key) as provider:
             return await compare_tracks(
-                provider, args.tracks,
-                sort_by=args.sort, descending=not args.ascending
+                provider, args.tracks, sort_by=args.sort, descending=not args.ascending
             )
 
     try:
