@@ -71,12 +71,14 @@ import asyncio
 from musicforge import MusicForge
 from musicforge.providers.musicbrainz import MusicBrainzAdapter
 
+
 async def main():
     async with MusicBrainzAdapter(contact="you@example.com") as provider:
         async with MusicForge([provider]) as music:
             tracks = await music.search_track("Collective Soul", "Burn")
             for track in tracks:
                 print(track.title, track.artists, track.identifiers)
+
 
 asyncio.run(main())
 ```
@@ -193,9 +195,11 @@ start MPD, and does not detect Spotify/YouTube playback automatically.
 import asyncio
 from musicforge.providers.mpd import MpdPlaybackSource
 
+
 async def main():
     track = await MpdPlaybackSource().current_track()
     print(track)
+
 
 asyncio.run(main())
 ```

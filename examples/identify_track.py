@@ -16,7 +16,11 @@ async def run(artist: str, title: str, contact: str, api_key: str) -> None:
         details = []
         for candidate in result.candidates:
             identifier = next(
-                (item for item in candidate.identifiers if item.namespace == "musicbrainz:recording"),
+                (
+                    item
+                    for item in candidate.identifiers
+                    if item.namespace == "musicbrainz:recording"
+                ),
                 None,
             )
             if identifier is None:
@@ -30,22 +34,29 @@ async def run(artist: str, title: str, contact: str, api_key: str) -> None:
     print(f"MusicBrainz candidates for {artist} - {title}:")
     for recording, detail in zip(result.candidates, details):
         enriched = detail.recording if detail is not None else recording
-        ids = ", ".join(f"{item.namespace}={item.value}" for item in enriched.identifiers)
+        ids = ", ".join(
+            f"{item.namespace}={item.value}" for item in enriched.identifiers
+        )
         credits = ", ".join(a.name for a in enriched.artists) or "unknown artist"
         duration = (
             f"{enriched.duration_ms // 60000}:{(enriched.duration_ms // 1000) % 60:02d}"
-            if enriched.duration_ms is not None else "unknown duration"
+            if enriched.duration_ms is not None
+            else "unknown duration"
         )
         print(f"  {enriched.title} | {credits} | {duration}")
         print(f"    {ids}")
         if detail is not None:
             for release in detail.releases[:5]:
-                print(f"    Release: {release.title} ({release.date or 'date unknown'})")
+                print(
+                    f"    Release: {release.title} ({release.date or 'date unknown'})"
+                )
             if len(detail.releases) > 5:
                 print(f"    ... and {len(detail.releases) - 5} more releases")
     if result.metadata_error:
         print(f"MusicBrainz unavailable: {result.metadata_error}")
-    print("Candidate recordings are not automatically ranked or classified as live/remastered.")
+    print(
+        "Candidate recordings are not automatically ranked or classified as live/remastered."
+    )
     print("Last.fm artist/title statistics (not assigned to a specific recording):")
     for stat in result.statistics:
         print(f"  {stat.metric}: {stat.value:,} {stat.unit}")
@@ -54,7 +65,9 @@ async def run(artist: str, title: str, contact: str, api_key: str) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Look up music identities and Last.fm listening counts")
+    parser = argparse.ArgumentParser(
+        description="Look up music identities and Last.fm listening counts"
+    )
     parser.add_argument("artist")
     parser.add_argument("title")
     args = parser.parse_args()

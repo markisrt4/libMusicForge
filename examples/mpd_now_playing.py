@@ -8,7 +8,9 @@ from musicforge.providers.mpd import MpdPlaybackSource
 
 
 async def run(host: str, port: int, password: str | None) -> None:
-    track = await MpdPlaybackSource(host=host, port=port, password=password).current_track()
+    track = await MpdPlaybackSource(
+        host=host, port=port, password=password
+    ).current_track()
     if track is None:
         print("No current MPD track (stopped or missing artist/title tags)")
     else:

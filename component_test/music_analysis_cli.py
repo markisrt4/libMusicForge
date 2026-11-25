@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Mark G. Russell
 # SPDX-License-Identifier: MIT
 """Headless end-to-end music analysis component check (Termux/Linux)."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -34,8 +35,10 @@ def main() -> None:
         assert getattr(frame, band) > 0.9
         assert len(frame.spectrum) == 24
         assert len(frame.spectrum_hz) == len(frame.spectrum_dbfs) == SIZE // 2 + 1
-        print(f"{band:6s}: input={frequency:5d}Hz peak={peak_hz:8.2f}Hz "
-              f"peak={frame.spectrum_dbfs[peak_index]:6.1f}dBFS")
+        print(
+            f"{band:6s}: input={frequency:5d}Hz peak={peak_hz:8.2f}Hz "
+            f"peak={frame.spectrum_dbfs[peak_index]:6.1f}dBFS"
+        )
 
     analyzer.clear_zeroize()
     analyzer.analyze(silence, RATE)
