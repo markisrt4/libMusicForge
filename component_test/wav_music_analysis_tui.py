@@ -12,7 +12,9 @@ import wave
 from pathlib import Path
 
 import numpy as np
+
 from musicforge.analysis import MusicAnalyzer
+
 from .wav_music_analysis_cli import decode_pcm
 
 
@@ -117,7 +119,9 @@ def run(screen: curses.window, path: Path, fft_size: int, play: bool) -> None:
                 height, columns = screen.getmaxyx()
                 screen.erase()
 
-                def line(y: int, value: str) -> None:
+                def line(
+                    y: int, value: str, height: int = height, columns: int = columns
+                ) -> None:
                     if 0 <= y < height and columns > 1:
                         try:
                             screen.addnstr(y, 0, value, columns - 1)
